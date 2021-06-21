@@ -32,6 +32,11 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
+        sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'onCart' and users_id = ?`;
+        let cart = await dba(sql, [dataUser[0].id]);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -40,7 +45,7 @@ module.exports = {
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("x-token-access", tokenAccess);
         res.set("x-token-refresh", tokenRefresh);
-        return res.status(200).send({ ...dataUser[0] });
+        return res.status(200).send({ ...dataUser[0], cart: cart });
       } else {
         return res.status(500).send({
           message:
@@ -107,7 +112,7 @@ module.exports = {
           const tokenRefresh = createTokenRefresh(dataToken);
           res.set("x-token-access", tokenAccess);
           res.set("x-token-refresh", tokenRefresh);
-          return res.status(200).send({ ...datauser[0] });
+          return res.status(200).send({ ...datauser[0], cart: [] });
         }
       }
     } catch (error) {
