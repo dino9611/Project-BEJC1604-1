@@ -32,7 +32,7 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
-        sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
+        sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
@@ -60,35 +60,46 @@ module.exports = {
   Registration: async (req, res) => {
     try {
       const { email, username, password, confirmpass, gender } = req.body;
-      let validation = new RegExp("^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])").test(password)
-      let usernameTest = new RegExp("\\s").test(username)
+      let validation = new RegExp("^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])").test(
+        password
+      );
+      let usernameTest = new RegExp("\\s").test(username);
       if (password != confirmpass) {
-        return res.status(400).send({ message: "Password does not match. Please check and try again." });
+        return res
+          .status(400)
+          .send({
+            message: "Password does not match. Please check and try again.",
+          });
       } else if (!email || !username || !password || !gender) {
         return res.status(400).send({
           message: "There is an unfilled input. Please check and try again.",
         });
-      } else if (password.length < 6){
+      } else if (password.length < 6) {
         return res.status(400).send({
           message: "Password must be at least 6 characters",
         });
-      } else if (validation === false){
+      } else if (validation === false) {
         return res.status(400).send({
-          message: "Password must contain numbers, uppercase and lowercase letter",
+          message:
+            "Password must contain numbers, uppercase and lowercase letter",
         });
-      } else if (usernameTest === true){
+      } else if (usernameTest === true) {
         return res.status(400).send({
           message: "Username cannot contain spaces",
         });
       } else {
         let sql = `select * from users where username=?`;
         const dataUserUsername = await dba(sql, [username]);
-        sql = `select * from users where email=?`
+        sql = `select * from users where email=?`;
         const dataUserEmail = await dba(sql, [email]);
         if (dataUserUsername.length) {
-          return res.status(500).send({ message: "Username has been registered" });
+          return res
+            .status(500)
+            .send({ message: "Username has been registered" });
         } else if (dataUserEmail.length) {
-          return res.status(500).send({ message: "E-mail has been registered" });
+          return res
+            .status(500)
+            .send({ message: "E-mail has been registered" });
         } else {
           sql = `insert into users set ?`;
           const uid = uuidv4();
