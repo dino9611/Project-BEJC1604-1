@@ -1,35 +1,45 @@
-require("dotenv").config();
+"use strict";
 const express = require("express");
-const app = express();
 const cors = require("cors");
-const bearerToken = require("express-bearer-token");
-const morgan = require("morgan");
+require("dotenv").config();
+const app = express();
 const PORT = 5000;
+const morgan = require("morgan");
+
 
 morgan.token("date", function (req, res) {
   return new Date();
 });
 
-app.use(express.urlencoded({ extended: false }));
-
-app.use(express.static("public"));
-
-app.use(express.json());
-
-app.use(cors());
-
-app.use(bearerToken());
-
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :date")
 );
+app.use(
+  cors({
+    exposedHeaders: [
+      "Content-Length",
+      "x-token-access",
+      "x-token-refresh",
+      "x-total-count",
+    ],
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.send("<h1> Welcome to API FURNIR</h1>");
+  res.send({ message: "REST API FOURNIR" })
+})
+
+const {
+  authRoutes,
+} = require("./src/routes");
+
+app.use("/auth", authRoutes);
+
+app.all("*", (req, res) => {
+  res.status(404).send({ message: "resource not found"});
 });
 
-const { AdminRoutes } = require("./src/routes");
-
-app.use("/admin", AdminRoutes);
-
-app.listen(PORT, () => console.log(`Port ${PORT} is active`));
+app.listen(PORT, () => console.log(`listen in PORT ${PORT}`));
