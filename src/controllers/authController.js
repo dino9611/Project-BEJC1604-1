@@ -34,7 +34,7 @@ module.exports = {
       if (dataUser.length) {
         let dataToken = {
           uid: dataUser[0].uid,
-          username: dataUser[0].username,
+          role: dataUser[0].role,
         };
         const tokenAccess = createAccessToken(dataToken);
         const tokenRefresh = createTokenRefresh(dataToken);
