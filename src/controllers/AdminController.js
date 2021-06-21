@@ -2,7 +2,6 @@ const { db } = require("./../connection");
 const { uploader } = require("../helpers");
 const fs = require("fs");
 const { promisify } = require("util");
-const { DH_NOT_SUITABLE_GENERATOR } = require("constants");
 const dba = promisify(db.query).bind(db);
 
 module.exports = {
@@ -42,7 +41,7 @@ module.exports = {
 
   addProduct: async (req, res) => {
     try {
-      const path = "product";
+      const path = "/product";
       const upload = uploader(path, "PROD").fields([{ name: "image" }]);
       upload(req, res, (err) => {
         if (err) {
