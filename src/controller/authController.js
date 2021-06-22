@@ -22,21 +22,23 @@ module.exports = {
     addDataUser: (req, res) => {
         try {
             const { id } = req.params;
-            const { first_name, last_name, gender, age } = req.body;
-            let dataToAdd = {
+            const { first_name, last_name, gender, age, address, city, phone_number, zip } = req.body;
+            let data1 = {
                 first_name: first_name,
                 last_name: last_name,
                 gender: gender,
-                age: age
+                age: age,
+                phone_number: phone_number
             };
             let sql = `update users set ? where id = ?`;
-            mysqldb.query(sql, [dataToAdd, id], (error) => {
+            mysqldb.query(sql, [data1, id], (error) => {
                 if (error) return res.status(500).send(error);
-                sql = `select * from users where first_name = ?`;
-                mysqldb.query(sql, [first_name], (error, result) => {
-                    if (error) return res.status(400).send(error);
-                    return res.status(200).send(result);
-                });
+                let data2 = {
+                    address: address,
+                    city: city,
+                    zip: zip
+                };
+                sql = `insert into address set ?`;
             });
         } catch (error) {
             console.error(error);
