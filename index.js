@@ -29,17 +29,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.send({ message: "REST API FOURNIR" })
-})
+  res.send({ message: "REST API FOURNIR" });
+});
 
 const {
-  authRoutes,
+  authRoutes, adminRoutes
 } = require("./src/routes");
 
 app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
 
 app.all("*", (req, res) => {
-  res.status(404).send({ message: "resource not found"});
+  res.status(404).send({ message: "resource not found" });
 });
 
 app.listen(PORT, () => console.log(`listen in PORT ${PORT}`));
