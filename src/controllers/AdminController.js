@@ -3,9 +3,9 @@ const { promisify } = require("util");
 const {
   createAccessToken,
   createTokenRefresh,
-} = require("../helpers/createToken");
+} = require("./../helpers/createToken");
 const { v4: uuidv4 } = require("uuid");
-const hashpass = require("../helpers/hassingPass");
+const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 // const { db } = require("./../connection");
 const { uploader } = require("../helpers");
