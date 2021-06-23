@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require("uuid");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 const geolib = require("geolib");
+
 module.exports = {
   All: async (req, res) => {
     try {
