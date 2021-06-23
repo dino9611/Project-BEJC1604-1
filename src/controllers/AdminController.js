@@ -11,7 +11,29 @@ module.exports = {
                     from products p 
                     left join products_location pl on p.id = pl.products_id 
                     left join warehouse w on pl.warehouse_id = w.id 
-                    join category c on p.category_id = c.id group by p.id;`;
+                    join category c on p.category_id = c.id 
+                    where p.is_deleted = 0 group by p.id;`;
+      const dataProduct = await dba(sql);
+      return res.status(200).send(dataProduct);
+    } catch (error) {
+      return res.status(500).send(error);
+    }
+  },
+
+  getProductAdmin: async (req, res) => {
+    try {
+      const { pages, limit } = req.query;
+      if (!pages || !limit)
+        return res.status(400).send({ message: "Pages/limit harus diisi" });
+      let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
+                    from products p 
+                    left join products_location pl on p.id = pl.products_id 
+                    left join warehouse w on pl.warehouse_id = w.id 
+                    join category c on p.category_id = c.id 
+                    where p.is_deleted = 0 group by p.id 
+                    limit ${db.escape((parseInt(pages) - 1) * 10)},${db.escape(
+        parseInt(limit)
+      )}`;
       const dataProduct = await dba(sql);
       return res.status(200).send(dataProduct);
     } catch (error) {
@@ -58,38 +80,36 @@ module.exports = {
           image: imagePath,
           category_id: data.category,
         };
+        console.log(data);
 
-        db.query(`insert into products set ?`, dataInsert, (err, result) => {
-          if (err) {
-            if (imagePath) {
-              fs.unlinkSync("./public" + imagePath);
-            }
-            return res.status(500).send(err);
-          }
-          const insertProduct = {
-            qty: data.quantity,
-            warehouse_id: data.location,
-            products_id: result.insertId,
-          };
-
-          db.query(
-            `insert into products_location set ?`,
-            insertProduct,
-            async (err) => {
-              if (err) {
-                return res.status(500).send(err);
+        db.query(
+          `insert into products set ?`,
+          dataInsert,
+          async (err, result) => {
+            if (err) {
+              if (imagePath) {
+                fs.unlinkSync("./public" + imagePath);
               }
-
-              let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
-              from products p 
-              left join products_location pl on p.id = pl.products_id 
-              left join warehouse w on pl.warehouse_id = w.id 
-              join category c on p.category_id = c.id group by p.id`;
-              const resultAddProduct = await dba(sql);
-              return res.status(200).send(resultAddProduct);
+              return res.status(500).send(err);
             }
-          );
-        });
+
+            const dataQty = data.qty.map((val) => {
+              return { ...val, products_id: result.insertId };
+            });
+
+            dataQty.forEach(async (val) => {
+              await dba(`insert into products_location set ?`, val);
+            });
+
+            let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location
+              from products p
+              left join products_location pl on p.id = pl.products_id
+              left join warehouse w on pl.warehouse_id = w.id
+              join category c on p.category_id = c.id where p.is_deleted = 0 group by p.id`;
+            const resultAddProduct = await dba(sql);
+            return res.status(200).send(resultAddProduct);
+          }
+        );
       });
     } catch (error) {
       return res.status(500).send({ message: "server error" });
@@ -103,7 +123,7 @@ module.exports = {
 
       db.query(sql, [id], (err, result) => {
         if (err) return res.status(500).send(err);
-        sql = `delete from products where id = ?`;
+        sql = `update products set is_deleted = 1 where id = ?`;
 
         db.query(sql, [id], async (err) => {
           if (err) return res.status(500).send(err);
@@ -111,7 +131,7 @@ module.exports = {
             fs.unlinkSync("./public" + result[0].image);
           }
 
-          sql = `select * from products`;
+          sql = `select * from products where is_deleted = 0`;
           const dataProduct = await dba(sql);
           return res.status(200).send(dataProduct);
         });
