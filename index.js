@@ -31,9 +31,10 @@ app.get("/", (req, res) => {
   res.send({ message: "REST API FOURNIR" });
 });
 
-const { authRoutes } = require("./src/routes");
+const { authRoutes, adminRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send({ message: "resource not found" });
