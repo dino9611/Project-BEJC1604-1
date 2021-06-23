@@ -1,5 +1,5 @@
 module.exports = {
   authRoutes: require("./authRoutes"),
 
-  adminRoutes: require("./AdminRoutes"),
+  adminRoutes: require("./adminRoutes"),
 };
