@@ -196,6 +196,21 @@ module.exports = {
       return res.status(500).send({ error: true, message: error.message });
     }
   },
-
-  // Add Address and Add Personal Data
+  editAddress: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { address, city, zip, description } = req.body;
+      let updateData = {
+        address: address,
+        city: city,
+        zip: zip,
+        description: description,
+      };
+      let sql = `update address set ? user_id = ?`;
+      await dba(sql, [updateData, id]);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  }
 };
