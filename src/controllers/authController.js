@@ -13,6 +13,18 @@ const transporter = require("./../helpers/transporter");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 
+const dbprom = (query, arr = []) => {
+  return new Promise((resolve, reject) => {
+    mysqldb.query(query, arr, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
 module.exports = {
   All: async (req, res) => {
     try {
@@ -40,7 +52,8 @@ module.exports = {
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
-        let cart = await dba(sql, [dataUser[0].id]);
+        let cart = await dba(sql, [dataUser[0].uid]);
+        // console.log(cart, 'ini cart(login)')
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -58,6 +71,26 @@ module.exports = {
       }
     } catch (error) {
       // console.log(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+  KeepLogin: async (req, res) => {
+    try {
+      const { uid } = req.user;
+      // console.log(req.user, "ini req.user");
+      // console.log(uid, "ini uid");
+      let sql = `select * from users where uid = ?`;
+      const dataUser = await dbprom(sql, [uid]);
+      // console.log(dataUser, "ini data");
+      sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'onCart' and users_id = ?`;
+      let cart = await dbprom(sql, [uid]);
+      // console.log(cart, "ini cart");
+      return res.status(200).send({ ...dataUser[0], cart: cart });
+    } catch (error) {
+      console.log(error);
       return res.status(500).send({ message: "server error" });
     }
   },
@@ -158,11 +191,11 @@ module.exports = {
         uid: uid,
         role: role,
       };
-      
+
       let filePath = path.resolve(
         __dirname,
         "./../template/emailVerification.html"
-        );
+      );
       const tokenverified = createEmailVerifiedToken(dataToken);
       const renderHtml = fs.readFileSync(filePath, "utf-8");
       const template = handlebars.compile(renderHtml);
@@ -177,7 +210,6 @@ module.exports = {
       });
 
       return res.status(200).send({ message: "berhasil kirim" });
-
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: "server error" });
