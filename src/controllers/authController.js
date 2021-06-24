@@ -38,13 +38,13 @@ module.exports = {
   },
   Login: async (req, res) => {
     try {
-      const { emailorusername, password } = req.body;
-      if (!emailorusername || !password)
+      const { emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password)
         return res.status(400).send({ message: "bad request" });
       let sql = `select * from users where (email = ? or username = ?) and password = ?`;
       let dataUser = await dba(sql, [
-        emailorusername,
-        emailorusername,
+        emailOrUsername,
+        emailOrUsername,
         hashpass(password),
       ]);
       if (dataUser.length) {
