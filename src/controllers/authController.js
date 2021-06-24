@@ -140,12 +140,14 @@ module.exports = {
         } else {
           sql = `insert into users set ?`;
           const uid = uuidv4();
+          const userImageProfile = "/user/user-profile-default.jpg"
           let data = {
             uid: uid,
             username: username,
             password: hashpass(password),
             email: email,
             gender: gender,
+            photo: userImageProfile
           };
           await dba(sql, data);
           sql = `select * from users where uid = ?`;

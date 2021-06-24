@@ -2,6 +2,6 @@ module.exports = {
 
   authRoutes: require("./authRoutes"),
 
-  AdminRoutes: require("./AdminRoutes"),
+  // AdminRoutes: require("./AdminRoutes"),
 };
 
