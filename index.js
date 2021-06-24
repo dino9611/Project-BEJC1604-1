@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT;
 const morgan = require("morgan");
 
 morgan.token("date", function (req, res) {
@@ -32,16 +32,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.send({ message: "REST API FOURNIR" })
-})
+  res.send({ message: "REST API FOURNIR" });
+});
 
-const { authRoutes, ProductRoutes } = require("./src/routes");
+const { authRoutes, adminRoutes, ProductRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
 app.use("/product", ProductRoutes);
 
 app.all("*", (req, res) => {
-  res.status(404).send({ message: "resource not found"});
+  res.status(404).send({ message: "resource not found" });
 });
 
 app.listen(PORT, () => console.log(`listen in PORT ${PORT}`));

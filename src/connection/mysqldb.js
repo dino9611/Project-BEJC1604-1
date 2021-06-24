@@ -4,15 +4,14 @@ const connection = mysql.createConnection({
   port: 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: "final_project",
+  database: process.env.DB_NAME,
 });
 
-connection.connect((err) => {
-  if (err) {
-    console.log(err);
-    return;
+connection.connect((error) => {
+  if (error) {
+    console.error(error);
   }
-  console.log(`connected as id ${connection.threadId}`);
+  console.log("connect as id " + connection.threadId);
 });
 
 module.exports = connection;
