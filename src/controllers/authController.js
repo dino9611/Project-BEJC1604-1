@@ -48,7 +48,7 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
-        sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
+        sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
@@ -102,9 +102,11 @@ module.exports = {
       );
       let usernameTest = new RegExp("\\s").test(username);
       if (password != confirmpass) {
-        return res.status(400).send({
-          message: "Password does not match. Please check and try again.",
-        });
+        return res
+          .status(400)
+          .send({
+            message: "Password does not match. Please check and try again.",
+          });
       } else if (!email || !username || !password || !gender) {
         return res.status(400).send({
           message: "There is an unfilled input. Please check and try again.",

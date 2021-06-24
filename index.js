@@ -7,6 +7,7 @@ const bearerToken = require("express-bearer-token");
 const PORT = 5000;
 const morgan = require("morgan");
 
+
 morgan.token("date", function (req, res) {
   return new Date();
 });
