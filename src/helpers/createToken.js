@@ -12,8 +12,8 @@ module.exports = {
     return token;
   },
   createEmailVerifiedToken: (data) => {
-    const key = "postman";
-    const token = jwt.sign(data, key, { expiresIn: "1h" });
+    const key = "fournir-ecom";
+    const token = jwt.sign(data, key, { expiresIn: 60*1}); // 10s
     return token;
   },
 }
