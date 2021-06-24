@@ -39,8 +39,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-                          (parseInt(pages) - 1) * 10
-                        )},${mysqldb.escape(parseInt(limit))}`;
+        (parseInt(pages) - 1) * 10
+      )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       return res.status(200).send(dataProduct);
     } catch (error) {
@@ -168,7 +168,7 @@ module.exports = {
       let dataAdmin = await dba(sql, [
         emailorusername,
         emailorusername,
-        password,
+        hash(password),
       ]);
       if (dataAdmin.length) {
         let dataToken = {

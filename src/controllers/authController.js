@@ -27,14 +27,14 @@ module.exports = {
   },
   Login: async (req, res) => {
     try {
-      const { emailorusername, password } = req.body;
-      if (!emailorusername || !password)
+      const { emailorusername: emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password)
         return res.status(400).send({ message: "bad request" });
       let sql = `select * from users where (email = ? or username = ?) and password = ?`;
       let dataUser = await dba(sql, [
-        emailorusername,
-        emailorusername,
-        hashpass(password),
+        emailOrUsername,
+        emailOrUsername,
+        hash(password),
       ]);
       if (dataUser.length) {
         sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
@@ -160,7 +160,7 @@ module.exports = {
   },
   getUser: (req, res) => {
     const { id } = req.params;
-    let sql = `select * from users where id = ?`;
+    let sql = `select id, first_name, last_name, email, phone_number, age from users where id = ?`;
     mysqldb.query(sql, [id], (error, result) => {
       if (error) return res.status(500).send(error);
       return res.status(200).send(result);
@@ -169,18 +169,17 @@ module.exports = {
   addPersonalData: (req, res) => {
     try {
       const { id } = req.params;
-      const { first_name, last_name, gender, age, phone_number } = req.body;
+      const { first_name, last_name, age, phone_number } = req.body;
       let dataToAdd = {
         first_name: first_name,
         last_name: last_name,
-        gender: gender,
         age: age,
         phone_number: phone_number,
       };
       let sql = `update users set ? where id = ?`;
       mysqldb.query(sql, [dataToAdd, id], (error) => {
         if (error) return res.status(500).send(error);
-        sql = `select id, first_name, last_name, email, phone_number, gender, age from users where id = ? `;
+        sql = `select id, first_name, last_name, email, phone_number, age from users where id = ? `;
         mysqldb.query(sql, [id], (error, result) => {
           if (error) return res.status(500).send(error);
           return res.status(200).send(result);
@@ -191,30 +190,74 @@ module.exports = {
       return res.status(500).send({ error: true, message: error.message });
     }
   },
+  getAddress: async (req, res) => {
+    try {
+      let { users_id } = req.params;
+      let sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
+      let hasil = await dba(sql, [users_id]);
+      return res.status(200).send(hasil);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
   addAddress: (req, res) => {
     try {
-      const { id } = req.params;
-      const { address, city, zip, description } = req.body;
-      let insertData = {
-        address: address,
-        city: city,
-        zip: zip,
-        description: description,
-        users_id: id,
-      };
-      let sql = `insert into address set ?`;
-      mysqldb.query(sql, [insertData], (error) => {
-        if (error) return res.status(500).send({ message: "bad request" });
-        sql = `select a.address, a.city, a.zip, a.description from address a 
-            join users u on a.users_id=u.id where u.id = ?`;
-        mysqldb.query(sql, [id], (error, result) => {
-          if (error) return res.status(500).send(error);
-          return res.status(200).send(result);
+      const { users_id } = req.params;
+      const { address, city, zip, description, latitude, longitude } = req.body;
+      let cekAlamat = `select * from address where users_id = ?`;
+      // ngecek alamat, apakah user sudah punya alamat atau belom
+      mysqldb.query(cekAlamat, [users_id], (error, result) => {
+        if (error) return res.status(500).send(error);
+        let insertData = {
+          address: address,
+          city: city,
+          zip: zip,
+          description: description,
+          users_id: users_id,
+          latitude: latitude,
+          longitude, // begini bisa
+        };
+        if (!result.length) {
+          // kalau tidak punya alamat satu pun
+          // maka alamat yang dimasukan akan jadi default
+          insertData.is_default = 1; // menambah property name dan property value pada object
+        }
+        let sql = `insert into address set ?`;
+        mysqldb.query(sql, [insertData], (error) => {
+          if (error) return res.status(500).send({ message: "bad request" });
+          sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
+          mysqldb.query(sql, [users_id], (error, result2) => {
+            if (error) return res.status(500).send(error);
+            return res.status(200).send(result2);
+          });
         });
       });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ error: true, message: error.message });
+    }
+  },
+  editAddress: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { address, city, zip, description, latitude, longitude } = req.body;
+      let updateData = {
+        address: address,
+        city: city,
+        zip: zip,
+        description: description,
+        latitude,
+        longitude,
+      };
+      let sql = `update address set ? where id = ?`;
+      await dba(sql, [updateData, id]);
+      sql = `select id, address, city, zip, description, is_default from address where id = ? order by is_default desc`;
+      let hasil = await dba(sql, [id]);
+      return res.status(200).send(hasil);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "server error" });
     }
   },
 
