@@ -17,12 +17,10 @@
     "nodemailer": "^6.5.0",
     "express-bearer-token": "^2.4.0",
     "geolib": "^3.3.1",
-    "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
     "mysql": "^2.18.1",
-    "nodemailer": "^6.5.0",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   }
