@@ -1,7 +1,5 @@
 module.exports = {
-
   authRoutes: require("./authRoutes"),
-
-  AdminRoutes: require("./AdminRoutes"),
+  ProductRoutes: require("./ProductRoutes"),
 };
 
