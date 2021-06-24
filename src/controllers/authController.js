@@ -6,6 +6,10 @@ const {
   createEmailVerifiedToken,
 } = require("../helpers/createToken");
 const { v4: uuidv4 } = require("uuid");
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
+const transporter = require("./../helpers/transporter");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 const geolib = require("geolib");
@@ -54,7 +58,7 @@ module.exports = {
         });
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       return res.status(500).send({ message: "server error" });
     }
   },
@@ -110,16 +114,33 @@ module.exports = {
             gender: gender,
           };
           await dba(sql, data);
-          sql = `select * from users where uid = ? `;
-          const datauser = await dba(sql, [uid]);
-          console.log(datauser);
+          sql = `select * from users where uid = ?`;
+          var datauser = await dba(sql, [uid]);
+
+          let filePath = path.resolve(
+            __dirname,
+            "./../template/emailVerification.html"
+          );
+          const renderHtml = fs.readFileSync(filePath, "utf-8");
+          const template = handlebars.compile(renderHtml);
+
           let dataToken = {
             uid: datauser[0].uid,
             role: datauser[0].role,
           };
-          // const tokenEmail = createEmailVerifiedToken(dataToken);
+          const tokenverified = createEmailVerifiedToken(dataToken);
           const tokenAccess = createAccessToken(dataToken);
           const tokenRefresh = createTokenRefresh(dataToken);
+          const link = "http://localhost:3000/verified-email/" + tokenverified;
+
+          const htmltoemail = template({ username: username, link: link });
+          await transporter.sendMail({
+            from: "Admin Fournir <omiputrakarunia@gmail.com>",
+            to: email,
+            subject: `We need email confirmation for your account`,
+            html: htmltoemail,
+          });
+
           res.set("x-token-access", tokenAccess);
           res.set("x-token-refresh", tokenRefresh);
           return res.status(200).send({ ...datauser[0], cart: [] });
@@ -198,4 +219,60 @@ module.exports = {
   },
 
   // Add Address and Add Personal Data
+  sendEmailVerification: async (req, res) => {
+    try {
+      const { uid, email, role, username } = req.body;
+      // console.log(uid, email, role, username);
+      const dataToken = {
+        uid: uid,
+        role: role,
+      };
+
+      let filePath = path.resolve(
+        __dirname,
+        "./../template/emailVerification.html"
+      );
+      const tokenverified = createEmailVerifiedToken(dataToken);
+      const renderHtml = fs.readFileSync(filePath, "utf-8");
+      const template = handlebars.compile(renderHtml);
+      const link = "http://localhost:3000/verified-email/" + tokenverified;
+
+      const htmltoemail = template({ username: username, link: link });
+      await transporter.sendMail({
+        from: "Admin Fournir <omiputrakarunia@gmail.com>",
+        to: email,
+        subject: `We need email confirmation for your account`,
+        html: htmltoemail,
+      });
+
+      return res.status(200).send({ message: "berhasil kirim" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+  verifiedEmailwithToken: async (req, res) => {
+    try {
+      let { uid } = req.user;
+      // console.log(uid)
+      let dataUpdate = {
+        is_verified: 1,
+      };
+      let sql = `select * from users where uid = ?`;
+      let dataUser = await dba(sql, uid);
+      if (dataUser[0].is_verified) {
+        return res.status(200).send({ message: "email telah verified" });
+      }
+      // console.log(dataUser[0].is_verified)
+      sql = `update users set ? where uid = ?`;
+      await dba(sql, [dataUpdate, uid]);
+      sql = `select * from users where uid = ?`;
+      let dataUserVerified = await dba(sql, uid);
+      // console.log(dataUser[0]);
+      return res.status(200).send(dataUserVerified[0]);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
 };

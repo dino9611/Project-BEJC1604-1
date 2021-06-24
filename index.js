@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT;
+const bearerToken = require("express-bearer-token");
 const morgan = require("morgan");
 
 morgan.token("date", function (req, res) {
@@ -14,6 +15,7 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :date")
 );
 
+app.use(bearerToken());
 app.use(
   cors({
     exposedHeaders: [
