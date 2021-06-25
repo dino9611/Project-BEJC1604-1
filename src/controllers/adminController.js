@@ -147,6 +147,7 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
   loginAdmin: async (req, res) => {
     try {
       const { emailOrUsername, password } = req.body;
@@ -168,7 +169,7 @@ module.exports = {
       let dataAdmin = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
-        hash(password),
+        hashpass(password),
       ]);
       if (dataAdmin.length) {
         let dataToken = {
@@ -187,7 +188,7 @@ module.exports = {
         });
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return res.status(500).send({ message: "server error" });
     }
   },

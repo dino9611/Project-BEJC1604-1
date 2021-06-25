@@ -259,7 +259,10 @@ module.exports = {
         }
         let sql = `insert into address set ?`;
         mysqldb.query(sql, [insertData], (error) => {
-          if (error) return res.status(500).send({ message: "bad request" });
+          if (error) {
+            console.error(error);
+            return res.status(500).send({ message: "server error" });
+          };
           sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
           mysqldb.query(sql, [users_id], (error, result2) => {
             if (error) return res.status(500).send(error);
