@@ -26,3 +26,12 @@ module.exports.verifyEmailToken = (req, res, next) => {
     next();
   });
 };
+
+// module.exports.checkId = (req, res, next) => {
+//   const { uid } = req.body;
+//   if (uid === req.user.uid) {
+//     next();
+//   } else {
+//     return res.status(401).send({ message: "user unauthorized" });
+//   }
+// };

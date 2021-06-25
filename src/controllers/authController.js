@@ -39,14 +39,15 @@ module.exports = {
   },
   Login: async (req, res) => {
     try {
-      const { emailorusername: emailOrUsername, password } = req.body;
-      if (!emailOrUsername || !password)
+      const { emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
+      }
       let sql = `select * from users where (email = ? or username = ?) and password = ?`;
       let dataUser = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
-        hash(password),
+        hashpass(password),
       ]);
       if (dataUser.length) {
         sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
@@ -87,7 +88,7 @@ module.exports = {
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
-      let cart = await dbprom(sql, [uid]);
+      let cart = await dbprom(sql, dataUser[0].id);
       // console.log(cart, "ini cart");
       return res.status(200).send({ ...dataUser[0], cart: cart });
     } catch (error) {
@@ -97,12 +98,12 @@ module.exports = {
   },
   Registration: async (req, res) => {
     try {
-      const { email, username, password, confirmpass, gender } = req.body;
+      const { email, username, password, confirmPassword, gender } = req.body;
       let validation = new RegExp("^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])").test(
         password
       );
       let usernameTest = new RegExp("\\s").test(username);
-      if (password != confirmpass) {
+      if (password !== confirmPassword) {
         return res.status(400).send({
           message: "Password does not match. Please check and try again.",
         });
@@ -293,8 +294,6 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
-
-  // Add Address and Add Personal Data
   sendEmailVerification: async (req, res) => {
     try {
       const { uid, email, role, username } = req.body;

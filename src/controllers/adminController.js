@@ -149,14 +149,14 @@ module.exports = {
   },
   loginAdmin: async (req, res) => {
     try {
-      const { emailorusername, password } = req.body;
-      if (!emailorusername || !password) {
+      const { emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
       }
       let sql = `select * from users where (email = ? or username = ?) and password = ? and not role = 1 and is_deleted = 1`;
       const deletedAdmin = await dba(sql, [
-        emailorusername,
-        emailorusername,
+        emailOrUsername,
+        emailOrUsername,
         password,
       ]);
       if (deletedAdmin.length) {
@@ -166,8 +166,8 @@ module.exports = {
       }
       sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
       let dataAdmin = await dba(sql, [
-        emailorusername,
-        emailorusername,
+        emailOrUsername,
+        emailOrUsername,
         hash(password),
       ]);
       if (dataAdmin.length) {
@@ -181,7 +181,7 @@ module.exports = {
         res.set("X-Token-Refresh", tokenRefresh);
         return res.status(200).send({ dataAdmin: dataAdmin[0] });
       } else {
-        return res.status(500).send({
+        return res.status(400).send({
           message:
             "The username or password you entered does not match our records. Please check and try again.",
         });
