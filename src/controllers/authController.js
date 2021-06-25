@@ -87,7 +87,7 @@ module.exports = {
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
-      let cart = await dbprom(sql, [uid]);
+      let cart = await dbprom(sql, [dataUser[0].id]);
       // console.log(cart, "ini cart");
       return res.status(200).send({ ...dataUser[0], cart: cart });
     } catch (error) {
