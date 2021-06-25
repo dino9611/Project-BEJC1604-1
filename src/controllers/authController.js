@@ -97,12 +97,12 @@ module.exports = {
   },
   Registration: async (req, res) => {
     try {
-      const { email, username, password, confirmpass, gender } = req.body;
+      const { email, username, password, confirmPassword, gender } = req.body;
       let validation = new RegExp("^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])").test(
         password
       );
       let usernameTest = new RegExp("\\s").test(username);
-      if (password != confirmpass) {
+      if (password != confirmPassword) {
         return res.status(400).send({
           message: "Password does not match. Please check and try again.",
         });
@@ -139,12 +139,14 @@ module.exports = {
         } else {
           sql = `insert into users set ?`;
           const uid = uuidv4();
+          const userImageProfile = "/user/user-profile-default.jpg";
           let data = {
             uid: uid,
             username: username,
             password: hashpass(password),
             email: email,
             gender: gender,
+            photo: userImageProfile,
           };
           await dba(sql, data);
           sql = `select * from users where uid = ?`;
