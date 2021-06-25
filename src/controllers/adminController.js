@@ -4,13 +4,9 @@ const {
   createAccessToken,
   createTokenRefresh,
 } = require("./../helpers/createToken");
-const { v4: uuidv4 } = require("uuid");
-const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
-// const { db } = require("./../connection");
 const { uploader } = require("../helpers");
 const fs = require("fs");
-// const dba = promisify(db.query).bind(db);
 module.exports = {
   getAllProductAdmin: async (req, res) => {
     try {
@@ -32,7 +28,7 @@ module.exports = {
       const { pages, limit } = req.query;
       if (!pages || !limit)
         return res.status(400).send({ message: "Pages/limit harus diisi" });
-      let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
+      let sql = `select p.id, p.name, p.price, p.image, p.category_id, sum(pl.qty) as quantity, c.category_name as category, w.location  
                         from products p 
                         left join products_location pl on p.id = pl.products_id 
                         left join warehouse w on pl.warehouse_id = w.id 
@@ -42,7 +38,11 @@ module.exports = {
                           (parseInt(pages) - 1) * 10
                         )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
-      return res.status(200).send(dataProduct);
+      sql = `select count(*) as totaldata from products where is_deleted = 0`;
+      const countProduct = await dba(sql);
+      return res
+        .status(200)
+        .send({ dataProduct, totaldata: countProduct[0].totaldata });
     } catch (error) {
       return res.status(500).send(error);
     }
@@ -93,6 +93,7 @@ module.exports = {
           `insert into products set ?`,
           dataInsert,
           async (err, result) => {
+            console.log(result, "masuk");
             if (err) {
               if (imagePath) {
                 fs.unlinkSync("./public" + imagePath);
@@ -108,19 +109,78 @@ module.exports = {
               await dba(`insert into products_location set ?`, val);
             });
 
-            let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location
-                  from products p
-                  left join products_location pl on p.id = pl.products_id
-                  left join warehouse w on pl.warehouse_id = w.id
-                  join category c on p.category_id = c.id where p.is_deleted = 0 group by p.id`;
+            let sql = `select count(*) as totaldata from products where is_deleted = 0`;
             const resultAddProduct = await dba(sql);
-            return res.status(200).send(resultAddProduct);
+            // console.log(resultAddProduct);
+            return res
+              .status(200)
+              .send({ totaldata: resultAddProduct[0].totaldata });
           }
         );
       });
     } catch (error) {
       return res.status(500).send({ message: "server error" });
     }
+  },
+
+  updateProduct: (req, res) => {
+    const { id } = req.params;
+    let sql = `select * from products where id = ${id}`;
+    mysqldb.query(sql, [id], (err, result) => {
+      console.log(result);
+      if (err) return res.status(500).send(err);
+      try {
+        const path = "/product";
+        const upload = uploader(path, "PROD").fields([{ name: "image" }]);
+        upload(req, res, (err) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "Upload picture failed", error: err.message });
+          }
+          const { image } = req.files;
+          const imagePath = image ? path + "/" + image[0].filename : null;
+          console.log(imagePath);
+          const data = JSON.parse(req.body.data);
+          let dataInsert = {
+            name: data.name,
+            price: data.price,
+            category_id: data.category,
+          };
+          if (imagePath) {
+            dataInsert.image = imagePath;
+          }
+          mysqldb.query(
+            `update products set ? where id = ${id} `,
+            [dataInsert, id],
+            async (err) => {
+              //hapus foto baru kalau update gagal
+              if (err) {
+                if (imagePath) {
+                  fs.unlinkSync("./public" + imagePath);
+                }
+                return res.status(500).send(err);
+              }
+              // hapus foto lama
+              if (imagePath) {
+                if (result[0].image) {
+                  fs.unlinkSync("./public" + result[0].image);
+                }
+              }
+
+              let sql = `select count(*) as totaldata from products where is_deleted = 0`;
+              const dataProduct = await dba(sql);
+              console.log(dataProduct);
+              return res
+                .status(200)
+                .send({ totaldata: dataProduct[0].totaldata });
+            }
+          );
+        });
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+    });
   },
 
   deleteProduct: async (req, res) => {
@@ -138,15 +198,16 @@ module.exports = {
             fs.unlinkSync("./public" + result[0].image);
           }
 
-          sql = `select * from products where is_deleted = 0`;
+          sql = `select count(*) as totaldata from products where is_deleted = 0`;
           const dataProduct = await dba(sql);
-          return res.status(200).send(dataProduct);
+          return res.status(200).send({ totaldata: dataProduct[0].totaldata });
         });
       });
     } catch (error) {
       return res.status(500).send({ message: "server error" });
     }
   },
+
   loginAdmin: async (req, res) => {
     try {
       const { emailorusername, password } = req.body;
