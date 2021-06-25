@@ -4,7 +4,7 @@ const app = express();
 const cors = require("cors");
 const bearerToken = require("express-bearer-token");
 const morgan = require("morgan");
-const PORT = 5000;
+const PORT = process.env.PORT;
 
 morgan.token("date", function (req, res) {
   return new Date();
