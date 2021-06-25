@@ -39,14 +39,14 @@ module.exports = {
   },
   Login: async (req, res) => {
     try {
-      const { emailorusername: emailOrUsername, password } = req.body;
+      const { emailOrUsername, password } = req.body;
       if (!emailOrUsername || !password)
         return res.status(400).send({ message: "bad request" });
       let sql = `select * from users where (email = ? or username = ?) and password = ?`;
       let dataUser = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
-        hash(password),
+        hashpass(password),
       ]);
       if (dataUser.length) {
         sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
@@ -77,19 +77,23 @@ module.exports = {
   },
   KeepLogin: async (req, res) => {
     try {
-      const { uid } = req.user;
-      // console.log(req.user, "ini req.user");
-      // console.log(uid, "ini uid");
-      let sql = `select * from users where uid = ?`;
-      const dataUser = await dbprom(sql, [uid]);
-      // console.log(dataUser, "ini data");
-      sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
-        join orders_detail od on o.id = od.orders_id
-        join products p on od.product_id = p.id
-        where o.status = 'onCart' and users_id = ?`;
-      let cart = await dbprom(sql, [dataUser[0].id]);
-      // console.log(cart, "ini cart");
-      return res.status(200).send({ ...dataUser[0], cart: cart });
+      const { uid, role } = req.user;
+      if (role === 1) {
+        // console.log(req.user, "ini req.user");
+        // console.log(uid, "ini uid");
+        let sql = `select * from users where uid = ?`;
+        const dataUser = await dbprom(sql, [uid]);
+        // console.log(dataUser, "ini data");
+        sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
+          join orders_detail od on o.id = od.orders_id
+          join products p on od.product_id = p.id
+          where o.status = 'onCart' and users_id = ?`;
+        let cart = await dbprom(sql, [dataUser[0].id]);
+        // console.log(cart, "ini cart");
+        return res.status(200).send({ ...dataUser[0], cart: cart });
+      } else {
+        //disini ngodingnya untuk keeplogin admin
+      }
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: "server error" });
@@ -260,7 +264,10 @@ module.exports = {
         }
         let sql = `insert into address set ?`;
         mysqldb.query(sql, [insertData], (error) => {
-          if (error) return res.status(500).send({ message: "bad request" });
+          if (error) {
+            console.log(error);
+            return res.status(500).send({ message: "bad request" });
+          }
           sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
           mysqldb.query(sql, [users_id], (error, result2) => {
             if (error) return res.status(500).send(error);
@@ -269,7 +276,7 @@ module.exports = {
         });
       });
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).send({ error: true, message: error.message });
     }
   },
