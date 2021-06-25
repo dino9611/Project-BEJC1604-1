@@ -36,9 +36,11 @@ app.get("/", (req, res) => {
 
 const {
   authRoutes,
+  adminRoutes
 } = require("./src/routes");
 
 app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send({ message: "resource not found"});
