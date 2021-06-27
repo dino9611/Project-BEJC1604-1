@@ -33,7 +33,12 @@ module.exports = {
                           (parseInt(pages) - 1) * 12
                         )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
-      return res.status(200).send(dataProduct);
+      sql = `select count(*) as totaldata from products where is_deleted = 0`;
+      const countProduct = await dba(sql);
+      console.log(countProduct[0].totaldata);
+      return res
+        .status(200)
+        .send({ dataProduct, totaldata: countProduct[0].totaldata });
     } catch (error) {
       return res.status(500).send({ message: "server error" });
     }
