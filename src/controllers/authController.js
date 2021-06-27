@@ -50,12 +50,14 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
-        sql = `select p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        console.log('ini data user', dataUser);
+        // get cart user
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
-        let cart = await dba(sql, [dataUser[0].uid]);
-        // console.log(cart, 'ini cart(login)')
+        let cart = await dba(sql, [dataUser[0].id]);
+        console.log('ini cart user (login)', cart);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -84,10 +86,10 @@ module.exports = {
       let sql = `select * from users where uid = ?`;
       const dataUser = await dbprom(sql, [uid]);
       // console.log(dataUser, "ini data");
-      sql = `select p.id, p.name, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.price, od.qty from orders o
-        join orders_detail od on o.id = od.orders_id
-        join products p on od.product_id = p.id
-        where o.status = 'onCart' and users_id = ?`;
+      sql = `select od.id as ordersdetail_id, p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+      join orders_detail od on o.id = od.orders_id
+      join products p on od.product_id = p.id
+      where o.status = 'onCart' and users_id = ? and od.is_deleted = 0`;
       let cart = await dbprom(sql, dataUser[0].id);
       // console.log(cart, "ini cart");
       return res.status(200).send({ ...dataUser[0], cart: cart });

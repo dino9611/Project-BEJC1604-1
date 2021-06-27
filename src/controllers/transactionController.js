@@ -12,10 +12,10 @@ Date.prototype.addDays = function (days) {
     return date;
 };
 
-const sqlCart = `select p.id, p.name, p.price, p.category_id, p.image, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+const sqlCart = `select od.id as ordersdetail_id, p.id, p.name, p.price, p.category_id, p.image, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
 join orders_detail od on o.id = od.orders_id
 join products p on od.product_id = p.id
-where o.status = 'onCart' and users_id = ?`;
+where o.status = 'onCart' and users_id = ? and od.is_deleted = 0;`;
 
 module.exports = {
     addToCart: (req, res) => {
@@ -24,6 +24,15 @@ module.exports = {
         if (!users_id || !prod_id || !qty) {
             return res.status(400).send({ message: "bad request" });
         }
+        // let roleCheck = `select * from users where role = 1 and users_id = ?`;
+        // mysqldb.query(roleCheck, [users_id], (error, hasilRole) => {
+        //     if (error) {
+        //         return res.status(401).send({ message: `Admin can't buy` });
+        //     }
+        //     if(hasilRole.length){
+
+        //     }
+        // });
         // mengecek apakah users sudah menambahkan produk ke cart atau belum
         // kalau ada maka, baca line setelah cart.length
         // kalau tidak ada akan menambahkan status ke table orders jadi onCart beserta users_id nya 
@@ -46,7 +55,7 @@ module.exports = {
                         return res.status(500).send({ message: "server error" });
                     }
                     console.log('ini isiCart line 48', isiCart);
-                    if (isiCart.length) { // artinya productnya sudah ada di cart, maka kita tinggal ubah qty saja
+                    if (isiCart.length) { // artinya jika barangnya sudah ada di cart, maka kita tinggal ubah qty saja
                         // pertama cek dulu apakah penambahan qty akan melebihi qty di inventory/products_location
                         sql = `select sum(qty) as availableToUser, products_id from products_location where products_id = ? `;
                         mysqldb.query(sql, [prod_id], (error, result1) => {
@@ -202,8 +211,21 @@ module.exports = {
         });
     },
 
-    deleteCart: (req, res) => {
-        const { prod_id } = req.params;
+    deleteCart: async (req, res) => {
+        // mengubah kolom is_deleted pada table orders_detail menjadi 1 atau true
+        try {
+            const { ordersdetail_id, users_id } = req.params;
+            let sql = `update orders_detail set ? where id = ?`;
+            let dataDelete = {
+                is_deleted: 1
+            };
+            await dba(sql, [dataDelete, ordersdetail_id]);
+            let cart = await dba(sqlCart, [users_id]);
+            return res.status(200).send(cart);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: "server error" });
+        }
 
     },
 
