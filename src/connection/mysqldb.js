@@ -1,5 +1,4 @@
-
-const mysql = require('mysql');
+const mysql = require("mysql");
 
 const connection = mysql.createConnection({
   port: 3306,
@@ -8,13 +7,11 @@ const connection = mysql.createConnection({
   database: "pjdb2021",
 });
 
-connection.connect((err) => {
-  if(err) {
-    console.log(err);
-    return;
+connection.connect((error) => {
+  if (error) {
+    console.error(error);
   }
-  console.log(`connected as id ${connection.threadId}`)
+  console.log("connect as id " + connection.threadId);
 });
 
 module.exports = connection;
-

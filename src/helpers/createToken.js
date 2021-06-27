@@ -4,7 +4,7 @@ module.exports = {
   createAccessToken: (data) => {
     const key = "primarykey";
     const token = jwt.sign(data, key, { expiresIn: "2h" });
-    return token
+    return token;
   },
   createTokenRefresh: (data) => {
     const key = "query";
@@ -13,7 +13,7 @@ module.exports = {
   },
   createEmailVerifiedToken: (data) => {
     const key = "fournir-ecom";
-    const token = jwt.sign(data, key, { expiresIn: 60*1}); // 10s
+    const token = jwt.sign(data, key, { expiresIn: 60 * 1 }); // 10s
     return token;
   },
-}
+};
