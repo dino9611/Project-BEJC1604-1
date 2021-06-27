@@ -6,6 +6,6 @@ const { transactionController } = require('../controllers');
 
 const { addToCart } = transactionController;
 
-router.put('/cart', verifyTokenAccess, addToCart);
+router.post('/cart', verifyTokenAccess, addToCart);
 
 module.exports = router;
