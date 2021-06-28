@@ -218,4 +218,48 @@ module.exports = {
             return res.status(200).send(result[0]);
         });
     },
+    chooseAddressCart: async (req, res) => {
+        try {
+            const { address_id, users_id } = req.params;
+            sql = `update orders set ? where users_id = ?`;
+            let updateData = {
+                address_id: address_id
+            };
+            await dba(sql, [updateData, users_id]);
+            sql = `select * from orders where users_id = ?`;
+            const hasil = await dba(sql, users_id);
+            return res.status(200).send(hasil);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+
+    },
+    getBank: async (req, res) => {
+        try {
+            let sql = `select * from bank`;
+            const bank = await dba(sql);
+            return res.status(200).send(bank);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+    },
+    checkOut: async (req, res) => {
+        try {
+            let { bank_id, address_id, users_id } = req.body;
+            let sql = `update orders set ? where users_id`;
+            let dataUpdate = {
+                bank_id: bank_id,
+                address_id: address_id,
+                status: 'waitingForPayment'
+            };
+            await dba(sql, [dataUpdate, users_id]);
+            let cart = await dba(sqlCart, [users_id]);
+            return res.status(200).send(cart);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+    }
 };
