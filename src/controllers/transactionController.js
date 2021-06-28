@@ -165,7 +165,6 @@ module.exports = {
             }
         });
     },
-
     getCart: (req, res) => {
         const { users_id } = req.params;
         mysqldb.query(sqlCart, [users_id], (error, result) => {
@@ -175,7 +174,6 @@ module.exports = {
             return res.status(200).send(result);
         });
     },
-
     editQty: (req, res) => {
         const { ordersdetail_id, users_id, qty } = req.body;
         let sql = `update orders_detail set ? where id = ?`;
@@ -194,7 +192,6 @@ module.exports = {
             });
         });
     },
-
     deleteCart: async (req, res) => {
         // mengubah kolom is_deleted pada table orders_detail menjadi 1 atau true
         try {
@@ -211,7 +208,6 @@ module.exports = {
             return res.status(500).send({ message: "server error" });
         }
     },
-
     stockByProduct: (req, res) => {
         const { prod_id } = req.params;
         let sql = `select sum(qty) as availableToUser, products_id from products_location where products_id = ? `;
@@ -221,5 +217,5 @@ module.exports = {
             }
             return res.status(200).send(result[0]);
         });
-    }
+    },
 };
