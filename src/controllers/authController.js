@@ -40,7 +40,7 @@ module.exports = {
   Login: async (req, res) => {
     try {
       const { emailOrUsername, password } = req.body;
-      if (!emailOrUsername || !password)
+      if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
       }
       let sql = `select * from users where (email = ? or username = ?) and password = ?`;
@@ -50,14 +50,14 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
-        console.log('ini data user', dataUser);
+        console.log("ini data user", dataUser);
         // get cart user
         sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
-        console.log('ini cart user (login)', cart);
+        console.log("ini cart user (login)", cart);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -270,7 +270,7 @@ module.exports = {
           if (error) {
             console.error(error);
             return res.status(500).send({ message: "server error" });
-          };
+          }
           sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
           mysqldb.query(sql, [users_id], (error, result2) => {
             if (error) return res.status(500).send(error);
@@ -327,14 +327,14 @@ module.exports = {
       }
       let sql = `update address set ? where id = ?`;
       let data = {
-        is_default: 0
+        is_default: 0,
       };
       mysqldb.query(sql, [data, result[0].id], (error) => {
         if (error) {
           return res.status(500).send({ message: "server error" });
         }
         let dataBaru = {
-          is_default: 1
+          is_default: 1,
         };
         mysqldb.query(sql, [dataBaru, address_id], (error) => {
           if (error) {
