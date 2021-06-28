@@ -52,7 +52,7 @@ module.exports = {
       if (dataUser.length) {
         console.log('ini data user', dataUser);
         // get cart user
-        sql = `select od.id as ordersdetail_id, p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
@@ -86,7 +86,7 @@ module.exports = {
       let sql = `select * from users where uid = ?`;
       const dataUser = await dbprom(sql, [uid]);
       // console.log(dataUser, "ini data");
-      sql = `select od.id as ordersdetail_id, p.id, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+      sql = `select od.id as ordersdetail_id, p.id, p.image, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
       join orders_detail od on o.id = od.orders_id
       join products p on od.product_id = p.id
       where o.status = 'onCart' and users_id = ? and od.is_deleted = 0`;
@@ -313,21 +313,35 @@ module.exports = {
     }
   },
   defaultAddress: (req, res) => {
-    const { address_id } = req.params;
-    let sql = `update address set ? where id = ?`;
-    let data = {
-      is_default: 1
-    };
-    mysqldb.query(sql, [data, address_id], (error) => {
+    const { address_id, users_id } = req.params;
+    let alamatDefault = `select id from address where users_id = ? and is_default = 1`;
+    mysqldb.query(alamatDefault, users_id, (error, result) => {
       if (error) {
         return res.status(500).send({ message: "server error" });
       }
-      let dataBaru = {
+      let sql = `update address set ? where id = ?`;
+      let data = {
         is_default: 0
       };
-      sql = ``;
-      mysqldb.query(sql, [dataBaru, address_id], (error) => {
-
+      mysqldb.query(sql, [data, result[0].id], (error) => {
+        if (error) {
+          return res.status(500).send({ message: "server error" });
+        }
+        let dataBaru = {
+          is_default: 1
+        };
+        mysqldb.query(sql, [dataBaru, address_id], (error) => {
+          if (error) {
+            return res.status(500).send({ message: "server error" });
+          }
+          sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
+          mysqldb.query(sql, users_id, (error, result2) => {
+            if (error) {
+              return res.status(500).send({ message: "server error" });
+            }
+            return res.status(200).send(result2);
+          });
+        });
       });
     });
   },
