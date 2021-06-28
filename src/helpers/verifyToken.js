@@ -6,7 +6,7 @@ module.exports.verifyTokenAccess = (req, res, next) => {
   const key = "grup-1-finalproject";
   jwt.verify(token, key, (err, decoded) => {
     if (err) return res.status(401).send({ message: "user unauthorized" });
-    // console.log(decoded);
+    // console.log('ini isi decoded', decoded);
     req.user = decoded;
     next();
   });
@@ -21,8 +21,17 @@ module.exports.verifyEmailToken = (req, res, next) => {
       console.log(err);
       return res.status(401).send({ message: "user unauthorized" });
     }
-    // console.log(decoded, 'ini');
+    // console.log('ini decoded', decoded);
     req.user = decoded;
     next();
   });
 };
+
+// module.exports.checkId = (req, res, next) => {
+//   const { uid } = req.body;
+//   if (uid === req.user.uid) {
+//     next();
+//   } else {
+//     return res.status(401).send({ message: "user unauthorized" });
+//   }
+// };

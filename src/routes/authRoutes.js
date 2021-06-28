@@ -16,6 +16,8 @@ const {
   verifiedEmailwithToken,
   sendEmailVerification,
   getAddress,
+  defaultAddress,
+  deleteAddress
 } = authController;
 
 router.post("/login", Login);
@@ -28,5 +30,7 @@ router.get("/:id", getUser);
 router.get("/address/:users_id", getAddress);
 router.post("/addData/:id", addPersonalData);
 router.post("/addAddress/:users_id", addAddress);
+router.post('/defaultaddress/:address_id/:users_id', defaultAddress);
+router.delete('/address/delete/:address_id/:users_id', deleteAddress);
 
 module.exports = router;

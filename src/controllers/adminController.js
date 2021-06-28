@@ -276,6 +276,7 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
   loginAdmin: async (req, res) => {
     try {
       const { emailOrUsername, password } = req.body;
@@ -310,13 +311,13 @@ module.exports = {
         res.set("X-Token-Refresh", tokenRefresh);
         return res.status(200).send({ dataAdmin: dataAdmin[0] });
       } else {
-        return res.status(500).send({
+        return res.status(400).send({
           message:
             "The username or password you entered does not match our records. Please check and try again.",
         });
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return res.status(500).send({ message: "server error" });
     }
   },
