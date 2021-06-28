@@ -9,7 +9,6 @@ const {
   Login,
   KeepLogin,
   Registration,
-  All,
   getAllUsers,
   getUser,
   addPersonalData,

@@ -3,15 +3,81 @@ const { promisify } = require("util");
 const {
   createAccessToken,
   createTokenRefresh,
-} = require("./../helpers/createToken");
+} = require("../helpers/createToken");
 const { v4: uuidv4 } = require("uuid");
+const fs = require("fs");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 // const { db } = require("./../connection");
 const { uploader } = require("../helpers");
 const fs = require("fs");
 // const dba = promisify(db.query).bind(db);
+
 module.exports = {
+  TransactionAdmin: async (req, res) => {
+    try {
+      const { uid } = req.user;
+      // console.log(uid, 'ini uid admin')
+      let sql = `select u.id, concat(u.first_name,' ',u.last_name) as name, 
+      u.role, r.role as warehouse, 
+      w.id as warehouse_id 
+      from users u
+      join role r on r.id = u.role
+      join warehouse w on w.role_id = u.role
+      where u.uid = ?`;
+      const dataAdmin = await dba(sql, [uid]);
+
+      if (dataAdmin[0]) {
+        sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime, 
+        concat(hour(o.updated_at),".",minute(o.updated_at)) as hourTime,  
+        concat(u.first_name,' ',u.last_name) as name, 
+        o.status, p.name as productName, 
+        c.category_name as category, 
+        o.invoice_number, 
+        od.qty as quantity, od.price,
+        w.location as warehouse,
+        od.qty*od.price as amount
+        from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on p.id = od.product_id
+        join category c on p.category_id = c.id
+        join warehouse w on o.warehouse_id = w.id
+        join users u on u.id = o.users_id
+        where o.warehouse_id = ?`;
+        const dataTransaction = await dba(sql, dataAdmin[0].warehouse_id);
+        return res.status(200).send(dataTransaction);
+      } else {
+        sql = `select u.id, concat(u.first_name,' ',u.last_name) as name, u.role from users u
+        join role r on r.id = u.role
+        where u.uid = ?`;
+        const dataAdminSuper = await dba(sql, [uid]);
+        // console.log(dataAdminSuper[0], "ini data admin")
+        if (dataAdminSuper[0]) {
+          sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime, 
+          concat(hour(o.updated_at),".",minute(o.updated_at)) as hourTime,  
+          concat(u.first_name,' ',u.last_name) as name, 
+          o.status, p.name as productName, c.category_name as category, 
+          od.qty as quantity, 
+          w.location as warehouse,
+          o.invoice_number,
+          od.price, od.qty*od.price as amount
+          from orders o
+          join orders_detail od on o.id = od.orders_id
+          join products p on p.id = od.product_id
+          join category c on p.category_id = c.id
+          join warehouse w on o.warehouse_id = w.id
+          join users u on u.id = o.users_id`;
+          const dataTransaction = await dba(sql);
+          return res.status(200).send(dataTransaction);
+        } else {
+          return res.status(500).send({ message: "data not found" });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+  },
   getAllProductAdmin: async (req, res) => {
     try {
       let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
@@ -213,14 +279,14 @@ module.exports = {
   },
   loginAdmin: async (req, res) => {
     try {
-      const { emailorusername, password } = req.body;
-      if (!emailorusername || !password) {
+      const { emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
       }
       let sql = `select * from users where (email = ? or username = ?) and password = ? and not role = 1 and is_deleted = 1`;
       const deletedAdmin = await dba(sql, [
-        emailorusername,
-        emailorusername,
+        emailOrUsername,
+        emailOrUsername,
         password,
       ]);
       if (deletedAdmin.length) {
@@ -230,8 +296,8 @@ module.exports = {
       }
       sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
       let dataAdmin = await dba(sql, [
-        emailorusername,
-        emailorusername,
+        emailOrUsername,
+        emailOrUsername,
         hashpass(password),
       ]);
       if (dataAdmin.length) {
