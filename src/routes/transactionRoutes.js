@@ -11,4 +11,5 @@ router.delete('/deletecart/:ordersdetail_id/:users_id', verifyTokenAccess, delet
 router.get('/stockbyproduct/:prod_id', stockByProduct);
 router.patch('/editqty', editQty);
 
+
 module.exports = router;

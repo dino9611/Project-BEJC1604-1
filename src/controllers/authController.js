@@ -299,6 +299,38 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+  deleteAddress: async (req, res) => {
+    try {
+      const { address_id, users_id } = req.params;
+      let sql = `delete from address where id = ?`;
+      await dba(sql, [address_id]);
+      sql = `select id, address, city, zip, description, is_default from address where users_id = ?`;
+      const hasil = await dba(sql, [users_id]);
+      return res.status(200).send(hasil);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+  defaultAddress: (req, res) => {
+    const { address_id } = req.params;
+    let sql = `update address set ? where id = ?`;
+    let data = {
+      is_default: 1
+    };
+    mysqldb.query(sql, [data, address_id], (error) => {
+      if (error) {
+        return res.status(500).send({ message: "server error" });
+      }
+      let dataBaru = {
+        is_default: 0
+      };
+      sql = ``;
+      mysqldb.query(sql, [dataBaru, address_id], (error) => {
+
+      });
+    });
+  },
   sendEmailVerification: async (req, res) => {
     try {
       const { uid, email, role, username } = req.body;
