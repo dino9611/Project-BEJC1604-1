@@ -84,27 +84,11 @@ module.exports = {
                                         console.error(error);
                                         return res.status(500).send({ message: "server error" });
                                     }
+                                    console.log('ini hasil', hasil);
                                     return res.status(200).send(hasil);
                                 });
                             });
                         });
-                        // update qty pada cart untuk barang tersebut
-                        let qtyUpdate = {
-                            qty: qty + isiCart[0].qty
-                        };
-                        sql = `update orders_detail set ? where id = ?`;
-                        mysqldb.query(sql, [qtyUpdate, isiCart[0].id], (error) => {
-                            if (error) {
-                                return res.status(500).send({ message: "server error" });
-                            }
-                            mysqldb.query(sqlCart, [users_id], (error, result2) => {
-                                if (error) {
-                                    return res.status(500).send({ message: "server error" });
-                                }
-                                return res.status(200).send(result2);
-                            });
-                        });
-
                     } else {
                         // kalau isiCart.length 0 artinya product tidak ada di dalam cart
                         // oleh karena itu harus masukan product_id, orders_id dan qty ke orders_detail
@@ -193,12 +177,12 @@ module.exports = {
     },
 
     editQty: (req, res) => {
-        const { prod_id, orders_id, qty, users_id } = req.body;
-        let sql = `update orders_detail set ? where product_id = ? and orders_id = ?`;
+        const { ordersdetail_id, users_id, qty } = req.body;
+        let sql = `update orders_detail set ? where id = ?`;
         let dataEdit = {
             qty: qty
         };
-        mysqldb.query(sql, [dataEdit, prod_id, orders_id], (error) => {
+        mysqldb.query(sql, [dataEdit, ordersdetail_id], (error) => {
             if (error) {
                 return res.status(500).send({ message: "server error" });
             }
@@ -236,7 +220,7 @@ module.exports = {
             if (error) {
                 return res.status(500).send({ message: "server error" });
             }
-            return res.status(200).send(result);
+            return res.status(200).send(result[0]);
         });
     }
 };
