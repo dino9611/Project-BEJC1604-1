@@ -175,7 +175,7 @@ module.exports = {
             return res.status(200).send(result);
         });
     },
-
+    // edit Qty
     editQty: (req, res) => {
         const { ordersdetail_id, users_id, qty } = req.body;
         let sql = `update orders_detail set ? where id = ?`;
