@@ -82,7 +82,7 @@ module.exports = {
     try {
       const { uid, role } = req.user;
       console.log(req.user);
-      if (role == 1) { // tipe data role strings '' bukan number
+      if (role === 1) {
         console.log(req.user, "ini req.user");
         console.log(uid, "ini uid");
         let sql = `select * from users where uid = ?`;
