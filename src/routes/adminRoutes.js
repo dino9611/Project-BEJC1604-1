@@ -13,7 +13,6 @@ const {
   getAllProductAdmin,
   updateProduct,
   addProduct,
-  updateProduct,
   deleteProduct,
   loginAdmin,
 } = adminController;

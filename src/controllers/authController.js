@@ -50,14 +50,14 @@ module.exports = {
         hashpass(password),
       ]);
       if (dataUser.length) {
-        console.log("ini data user", dataUser);
+        // console.log("ini data user", dataUser);
         // get cart user
         sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
-        console.log("ini cart user (login)", cart);
+        // console.log("ini cart user (login)", cart);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -81,25 +81,26 @@ module.exports = {
   KeepLogin: async (req, res) => {
     try {
       const { uid, role } = req.user;
-      if (role === 1) {
-        // console.log(req.user, "ini req.user");
-        // console.log(uid, "ini uid");
+      console.log(req.user);
+      if (role == 1) { // tipe data role strings '' bukan number
+        console.log(req.user, "ini req.user");
+        console.log(uid, "ini uid");
         let sql = `select * from users where uid = ?`;
         const dataUser = await dbprom(sql, [uid]);
         // console.log(dataUser, "ini data");
-        sql = `select od.id as ordersdetail_id, p.id, p.image, p.name, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        sql = `select od.id as ordersdetail_id, p.id, p.image, p.name, p.price, p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ? and od.is_deleted = 0`;
         let cart = await dbprom(sql, dataUser[0].id);
-        // console.log(cart, "ini cart");
+        console.log(cart, "ini cart");
         return res.status(200).send({ ...dataUser[0], cart: cart });
       } else {
         //disini ngodingnya untuk keeplogin admin
       }
     } catch (error) {
-      console.log(error);
-      return res.status(500).send({ message: "server error" });
+      console.error(error);
+      return res.status(500).send({ message: "Server error" });
     }
   },
   Registration: async (req, res) => {
