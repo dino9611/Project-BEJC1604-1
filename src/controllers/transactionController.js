@@ -11,11 +11,16 @@ Date.prototype.addDays = function (days) {
     date.setDate(date.getDate() + days);
     return date;
 };
+const geolib = require('geolib');
 
 const sqlCart = `select od.id as ordersdetail_id, p.id, p.name, p.price, p.category_id, p.image, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
 join orders_detail od on o.id = od.orders_id
 join products p on od.product_id = p.id
 where o.status = 'onCart' and users_id = ? and od.is_deleted = 0;`;
+
+const generateInvoice = (orders_id, users_id) => {
+    return 'TRX' + orders_id + new Date().getTime() + users_id;
+};
 
 module.exports = {
     addToCart: (req, res) => {
@@ -247,19 +252,33 @@ module.exports = {
     },
     checkOut: async (req, res) => {
         try {
-            let { bank_id, address_id, users_id } = req.body;
-            let sql = `update orders set ? where users_id`;
+            let { bank_id, address_id, users_id, users_latitude, users_longitude, orders_id } = req.body;
+            let sql = `select * from warehouse`;
+            let hasil = await dba(sql);
+            let arrLatLong = hasil.map((val) => {
+                return { latitude: val.latitude, longitude: val.longitude };
+            });
+            let users_location = { latitude: users_latitude, longitude: users_longitude };
+            let nearest = geolib.findNearest(users_location, arrLatLong);
+            console.log(nearest);
+            let dataWarehouseNear = hasil.filter((val) => val.latitude == nearest.latitude && val.longitude == nearest.longitude);
+            let jarak = geolib.getDistance(users_location, nearest);
+            let ongkirPerKm = Math.ceil(jarak / 1000) * 16000;
+            sql = `update orders set ? where id = ?`;
             let dataUpdate = {
                 bank_id: bank_id,
                 address_id: address_id,
-                status: 'waitingForPayment'
+                warehouse_id: dataWarehouseNear[0].id,
+                status: 'awaiting payment',
+                ongkir: ongkirPerKm
             };
-            await dba(sql, [dataUpdate, users_id]);
+            await dba(sql, [dataUpdate, orders_id]);
             let cart = await dba(sqlCart, [users_id]);
             return res.status(200).send(cart);
+
         } catch (error) {
             console.error(error);
             return res.status(500).send({ message: 'Server error' });
         }
-    }
+    },
 };

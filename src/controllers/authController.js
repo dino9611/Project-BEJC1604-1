@@ -229,7 +229,7 @@ module.exports = {
   getAddress: async (req, res) => {
     try {
       let { users_id } = req.params;
-      let sql = `select id, address, city, zip, description, is_default from address where users_id = ? order by is_default desc`;
+      let sql = `select * from address where users_id = ? order by is_default desc`;
       let hasil = await dba(sql, [users_id]);
       return res.status(200).send(hasil);
     } catch (error) {
