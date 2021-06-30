@@ -252,7 +252,7 @@ module.exports = {
     },
     checkOut: async (req, res) => {
         try {
-            let { bank_id, address_id, users_id, users_latitude, users_longitude, orders_id } = req.body;
+            let { bank_id, address_id, users_id, users_latitude, users_longitude, orders_id, cart } = req.body;
             let sql = `select * from warehouse`;
             let hasil = await dba(sql);
             let arrLatLong = hasil.map((val) => {
@@ -273,8 +273,18 @@ module.exports = {
                 ongkir: ongkirPerKm
             };
             await dba(sql, [dataUpdate, orders_id]);
-            let cart = await dba(sqlCart, [users_id]);
-            return res.status(200).send(cart);
+            cart.forEach(async (val) => {
+                try {
+                    let cartUpdate = {
+                        price: val.price
+                    };
+                    await dba(`update orders_detail set ? where id = ?`, [cartUpdate, val.ordersdetail_id]);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+            let cart1 = await dba(sqlCart, [users_id]);
+            return res.status(200).send(cart1);
 
         } catch (error) {
             console.error(error);
