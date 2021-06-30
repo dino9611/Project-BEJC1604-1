@@ -292,3 +292,13 @@ module.exports = {
         }
     },
 };
+
+// update bukti pembayaran, status, invoice number where orders.id
+// get orders_detail where by orders.id 
+// ambilnya qyt dan products_id
+// karena mau insert lebih dari 1 row makanya dilooping, yg di looping data dari orders detail
+// ubah readyToSend jadi 1
+
+// data yang di insert qty, product_id, warehouse_id, orders_id, readyToSend
+
+// on cart, awaiting payment, awaiting confirmation(pembayaran), processed(stok barang cukup?), sending, delivered, rejected
