@@ -223,23 +223,6 @@ module.exports = {
             return res.status(200).send(result[0]);
         });
     },
-    chooseAddressCart: async (req, res) => {
-        try {
-            const { address_id, users_id } = req.params;
-            sql = `update orders set ? where users_id = ?`;
-            let updateData = {
-                address_id: address_id
-            };
-            await dba(sql, [updateData, users_id]);
-            sql = `select * from orders where users_id = ?`;
-            const hasil = await dba(sql, users_id);
-            return res.status(200).send(hasil);
-        } catch (error) {
-            console.error(error);
-            return res.status(500).send({ message: 'Server error' });
-        }
-
-    },
     getBank: async (req, res) => {
         try {
             let sql = `select * from bank`;
@@ -291,6 +274,91 @@ module.exports = {
             return res.status(500).send({ message: 'Server error' });
         }
     },
+    getOrders: async (req, res) => {
+        try {
+            const { users_id } = req.params;
+            let sql = `select o.*, b.name, b.account_number, sum(od.qty * od.price) as total from orders o 
+            join bank b on b.id = o.bank_id
+            join orders_detail od on od.orders_id = o.id
+            where status = 'awaiting payment' and users_id = ?
+            group by o.id
+            order by updated_at`;
+            let history = await dba(sql, users_id);
+            return res.status(200).send(history);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+
+    },
+    uploadPayment: (req, res) => {
+        try {
+            const { orders_id } = req.params;
+            const path = '/payment';
+
+            const upload = uploader(path, "PAY").fields([
+                { name: 'photo' }
+            ]);
+            upload(req, res, async (error) => {
+                if (error) {
+                    return res
+                        .status(500)
+                        .json({ message: 'Upload photo failed!', error: error.message });
+                }
+                console.log('berhasil');
+                console.log(req.files);
+                const { photo } = req.files;
+                const imagePath = photo ? path + '/' + photo[0].filename : null;
+                console.log(imagePath);
+                const data = JSON.parse(req.body.data);
+                const dataUpdate = {
+                    invoice_number: generateInvoice(orders_id, data.users_id),
+                    status: 'awaiting confirmation',
+                    bukti_pembayaran: imagePath
+                };
+                try {
+                    let sql = `update orders set ? where id = ?`;
+                    await dba(sql, [dataUpdate, orders_id]);
+                    sql = `select o.*, b.name, b.account_number, sum(od.qty * od.price) as total from orders o 
+                    join bank b on b.id = o.bank_id
+                    join orders_detail od on od.orders_id = o.id
+                    where status = 'awaiting payment' and users_id = ?
+                    group by o.id
+                    order by updated_at`;
+                    const result = await dba(sql, [data.users_id]);
+                    return res.status(200).send(result);
+                } catch (error) {
+                    console.error(error);
+                    if (imagePath) {
+                        fs.unlink('./public' + imagePath);
+                    }
+                    return res.status(500).send({ message: 'Server error' });
+                }
+            });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+    },
+    getDetailOrders: async (req, res) => {
+        try {
+            const { orders_id } = req.params;
+            let sql = `select p.name as productName, c.category_name as category, 
+                     od.qty as quantity, 
+                     od.price, od.qty*od.price as amount
+                    from orders o
+                    join orders_detail od on o.id = od.orders_id
+                    join products p on p.id = od.product_id
+                    join category c on p.category_id = c.id
+                    where o.id = ?`;
+            let hasil = await dba(sql, orders_id);
+            return res.status(200).send(hasil);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: 'Server error' });
+        }
+    }
 };
 
 // update bukti pembayaran, status, invoice number where orders.id
@@ -301,4 +369,3 @@ module.exports = {
 
 // data yang di insert qty, product_id, warehouse_id, orders_id, readyToSend
 
-// on cart, awaiting payment, awaiting confirmation(pembayaran), processed(stok barang cukup?), sending, delivered, rejected
