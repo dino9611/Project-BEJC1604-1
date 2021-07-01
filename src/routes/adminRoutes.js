@@ -6,7 +6,11 @@ const {
 const { adminController } = require("../controllers");
 
 const {
-  TransactionAdmin,
+  ConfirmTransactionAdmin,
+  RejectTransactionAdmin,
+  Transaction,
+  DetailTransaction,
+  GetDataAdmin,
   getProductAdmin,
   getAllCategory,
   getAllLocation,
@@ -25,6 +29,10 @@ router.put("/product/all/:id", updateProduct);
 router.post("/product/all", addProduct);
 router.delete("/product/:id", deleteProduct);
 router.post("/login", loginAdmin);
-router.get("/list-transaction", verifyTokenAccess, TransactionAdmin);
+router.get("/transaction", verifyTokenAccess, Transaction);
+router.get("/detail-transaction", verifyTokenAccess, DetailTransaction);
+router.get("/data-admin", verifyTokenAccess, GetDataAdmin);
+router.put("/confirm-transaction", verifyTokenAccess, ConfirmTransactionAdmin);
+router.put("/reject-transaction", verifyTokenAccess, RejectTransactionAdmin);
 
 module.exports = router;

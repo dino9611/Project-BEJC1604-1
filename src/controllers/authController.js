@@ -78,7 +78,7 @@ module.exports = {
   KeepLogin: async (req, res) => {
     try {
       const { uid, role } = req.user;
-      if (role === 1) {
+      if (role === 1 || 2 || 3 || 4 || 5) {
         // console.log(req.user, "ini req.user");
         // console.log(uid, "ini uid");
         let sql = `select * from users where uid = ?`;
