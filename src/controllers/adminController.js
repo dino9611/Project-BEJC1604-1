@@ -129,7 +129,7 @@ module.exports = {
 
   getAllLocation: async (req, res) => {
     try {
-      let sql = `select id, location from warehouse`;
+      let sql = `select * from warehouse`;
       const dataLocation = await dba(sql);
       return res.status(200).send(dataLocation);
     } catch (error) {
