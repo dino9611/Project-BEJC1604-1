@@ -57,6 +57,7 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
+        // let cart = await dba(sql);
         console.log("ini cart user (login)", cart);
         let dataToken = {
           uid: dataUser[0].uid,

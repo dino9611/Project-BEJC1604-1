@@ -13,6 +13,51 @@ const { uploader } = require("../helpers");
 // const dba = promisify(db.query).bind(db);
 
 module.exports = {
+  loginAdmin: async (req, res) => {
+    try {
+      const { emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password) {
+        return res.status(400).send({ message: "bad request" });
+      }
+      let sql = `select * from users where (email = ? or username = ?) and password = ? and not role = 1 and is_deleted = 1`;
+      const deletedAdmin = await dba(sql, [
+        emailOrUsername,
+        emailOrUsername,
+        password,
+      ]);
+      if (deletedAdmin.length) {
+        return res.status(403).send({
+          message: "Admin account is deleted, please contact Super Admin!",
+        });
+      }
+      sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
+      let dataAdmin = await dba(sql, [
+        emailOrUsername,
+        emailOrUsername,
+        hashpass(password),
+      ]);
+      if (dataAdmin.length) {
+        let dataToken = {
+          uid: dataAdmin[0].uid,
+          role: dataAdmin[0].role,
+        };
+        const tokenAccess = createAccessToken(dataToken);
+        const tokenRefresh = createTokenRefresh(dataToken);
+        res.set("X-Token-Access", tokenAccess);
+        res.set("X-Token-Refresh", tokenRefresh);
+        return res.status(200).send({ dataAdmin: dataAdmin[0] });
+      } else {
+        return res.status(400).send({
+          message:
+            "The username or password you entered does not match our records. Please check and try again.",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
   TransactionAdmin: async (req, res) => {
     try {
       const { uid } = req.user;
@@ -77,6 +122,7 @@ module.exports = {
       return res.status(500).send(error);
     }
   },
+
   getAllProductAdmin: async (req, res) => {
     try {
       let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
@@ -277,47 +323,57 @@ module.exports = {
     }
   },
 
-  loginAdmin: async (req, res) => {
+  getGender: async (req, res) => {
     try {
-      const { emailOrUsername, password } = req.body;
-      if (!emailOrUsername || !password) {
-        return res.status(400).send({ message: "bad request" });
-      }
-      let sql = `select * from users where (email = ? or username = ?) and password = ? and not role = 1 and is_deleted = 1`;
-      const deletedAdmin = await dba(sql, [
-        emailOrUsername,
-        emailOrUsername,
-        password,
-      ]);
-      if (deletedAdmin.length) {
-        return res.status(403).send({
-          message: "Admin account is deleted, please contact Super Admin!",
-        });
-      }
-      sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
-      let dataAdmin = await dba(sql, [
-        emailOrUsername,
-        emailOrUsername,
-        hashpass(password),
-      ]);
-      if (dataAdmin.length) {
-        let dataToken = {
-          uid: dataAdmin[0].uid,
-          role: dataAdmin[0].role,
-        };
-        const tokenAccess = createAccessToken(dataToken);
-        const tokenRefresh = createTokenRefresh(dataToken);
-        res.set("X-Token-Access", tokenAccess);
-        res.set("X-Token-Refresh", tokenRefresh);
-        return res.status(200).send({ dataAdmin: dataAdmin[0] });
-      } else {
-        return res.status(400).send({
-          message:
-            "The username or password you entered does not match our records. Please check and try again.",
-        });
-      }
+      let sql = `select count(distinct u.username) as total, u.gender from orders o
+                  join users u on o.users_id = u.id where o.status in ("delivered","sending") group by u.gender;`;
+      const dataGender = await dba(sql);
+      return res.status(200).send(dataGender);
     } catch (error) {
-      console.error(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
+  getCategoryReport: async (req, res) => {
+    try {
+      let sql = `select sum(od.qty) as total, c.category_name from category c 
+                  left join products p on p.category_id = c.id
+                  left join orders_detail od on od.product_id = p.id
+                  left join orders o on o.id = od.orders_id where o.status in ("delivered","sending") and od.is_deleted = 0 
+                  group by p.category_id;`;
+      const dataCategory = await dba(sql);
+      sql = `select category_name from category;`;
+      const totalCategory = await dba(sql);
+      console.log(totalCategory, "line 346");
+      console.log(dataCategory, "line 347");
+      return res.status(200).send({ dataCategory, totalCategory });
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
+  getRevenueReport: async (req, res) => {
+    try {
+      let sql = `select sum(od.qty) as total_product, sum(od.price*od.qty) as total_revenue, date_format(od.date, '%d %M %y') as month_ from orders_detail od
+                  left join products p on p.id = od.product_id
+                  left join orders o on o.id = od.orders_id
+                  where o.status in ("delivered", "sending") and od.is_deleted = 0 group by date_format(od.date, '%d %M %y') order by od.date;`;
+      const dataRevenue = await dba(sql);
+      return res.status(200).send(dataRevenue);
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
+  getWarehouseSales: async (req, res) => {
+    try {
+      let sql = `select sum(qty) as totalProduct, w.location from orders_detail od 
+                  join orders o on o.id = od.orders_id
+                  join warehouse w on o.warehouse_id = w.id
+                  where o.status in ("delivered", "sending") and od.is_deleted = 0 group by w.id;`;
+      const dataWarehouse = await dba(sql);
+      return res.status(200).send(dataWarehouse);
+    } catch (error) {
       return res.status(500).send({ message: "server error" });
     }
   },
