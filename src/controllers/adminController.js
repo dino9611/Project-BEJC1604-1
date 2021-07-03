@@ -394,14 +394,6 @@ module.exports = {
     }
   },
 
-
-
-
-
-
-
-
-
   getAllProductAdmin: async (req, res) => {
     try {
       let sql = `select p.id, p.name, p.price, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
