@@ -172,61 +172,6 @@ module.exports = {
       }
     });
   },
-  getCart: (req, res) => {
-    const { users_id } = req.params;
-    mysqldb.query(sqlCart, [users_id], (error, result) => {
-      if (error) {
-        return res.status(500).send({ message: "server error" });
-      }
-      return res.status(200).send(result);
-    });
-  },
-  // edit Qty
-  editQty: (req, res) => {
-    const { ordersdetail_id, users_id, qty } = req.body;
-    let sql = `update orders_detail set ? where id = ?`;
-    let dataEdit = {
-      qty: qty,
-    };
-    mysqldb.query(sql, [dataEdit, ordersdetail_id], (error) => {
-      if (error) {
-        return res.status(500).send({ message: "server error" });
-      }
-      mysqldb.query(sqlCart, [users_id], (error, result) => {
-        if (error) {
-          return res.status(500).send({ message: "server error" });
-        }
-        return res.status(200).send(result);
-      });
-    });
-  },
-  deleteCart: async (req, res) => {
-    // mengubah kolom is_deleted pada table orders_detail menjadi 1 atau true
-    try {
-      const { ordersdetail_id, users_id } = req.params;
-      let sql = `update orders_detail set ? where id = ?`;
-      let dataDelete = {
-        is_deleted: 1,
-      };
-      await dba(sql, [dataDelete, ordersdetail_id]);
-      let cart = await dba(sqlCart, [users_id]);
-      return res.status(200).send(cart);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send({ message: "server error" });
-    }
-  },
-  stockByProduct: (req, res) => {
-    const { prod_id } = req.params;
-    let sql = `select sum(qty) as availableToUser, products_id from products_location where products_id = ? `;
-    mysqldb.query(sql, prod_id, (error, result) => {
-      if (error) {
-        return res.status(500).send({ message: "server error" });
-      }
-      return res.status(200).send(result[0]);
-    });
-  },
-
   getBank: async (req, res) => {
     try {
       let sql = `select * from bank`;
@@ -374,6 +319,118 @@ module.exports = {
     } catch (error) {
       console.error(error);
       return res.status(500).send({ message: "Server error" });
+    }
+  },
+  getCart: (req, res) => {
+    const { users_id } = req.params;
+    mysqldb.query(sqlCart, [users_id], (error, result) => {
+      if (error) {
+        return res.status(500).send({ message: "server error" });
+      }
+      return res.status(200).send(result);
+    });
+  },
+  // edit Qty
+  editQty: (req, res) => {
+    const { ordersdetail_id, users_id, qty } = req.body;
+    let sql = `update orders_detail set ? where id = ?`;
+    let dataEdit = {
+      qty: qty,
+    };
+    mysqldb.query(sql, [dataEdit, ordersdetail_id], (error) => {
+      if (error) {
+        return res.status(500).send({ message: "server error" });
+      }
+      mysqldb.query(sqlCart, [users_id], (error, result) => {
+        if (error) {
+          return res.status(500).send({ message: "server error" });
+        }
+        return res.status(200).send(result);
+      });
+    });
+  },
+
+  deleteCart: async (req, res) => {
+    // mengubah kolom is_deleted pada table orders_detail menjadi 1 atau true
+    try {
+      const { ordersdetail_id, users_id } = req.params;
+      let sql = `update orders_detail set ? where id = ?`;
+      let dataDelete = {
+        is_deleted: 1,
+      };
+      await dba(sql, [dataDelete, ordersdetail_id]);
+      let cart = await dba(sqlCart, [users_id]);
+      return res.status(200).send(cart);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
+  stockByProduct: (req, res) => {
+    const { prod_id } = req.params;
+    let sql = `select sum(qty) as availableToUser, products_id from products_location where products_id = ? `;
+    mysqldb.query(sql, prod_id, (error, result) => {
+      if (error) {
+        return res.status(500).send({ message: "server error" });
+      }
+      return res.status(200).send(result[0]);
+    });
+  },
+
+  getHistory: async (req, res) => {
+    try {
+      const { uid } = req.user;
+      const { status, search } = req.query;
+      console.log(req.user);
+      let sql = `select o.id, p.name as name, u.uid, p.image, o.status, date_format(od.date,'%d %M %y') as date, 
+                  time_format(od.date, '%H:%i') as hour_, sum(od.price*od.qty) as total_price, od.price, 
+                  o.invoice_number as invoice, od.qty, o.users_id 
+                  from orders o 
+                  left join orders_detail od on o.id = od.orders_id
+                  left join products p on p.id = od.product_id 
+                  join users u on o.users_id = u.id
+                  where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending")
+                  group by o.id 
+                  order by od.date desc;`;
+      if (status) {
+        sql = `select o.id, p.name as name, u.uid, p.image, o.status, date_format(od.date,'%d %M %y') as date, 
+                  time_format(od.date, '%H:%i') as hour_, sum(od.price*od.qty) as total_price, od.price, 
+                  o.invoice_number as invoice, od.qty, o.users_id 
+                  from orders o 
+                  left join orders_detail od on o.id = od.orders_id
+                  left join products p on p.id = od.product_id 
+                  join users u on o.users_id = u.id
+                  where u.uid = ? and od.is_deleted = 0 and o.status = ${mysqldb.escape(
+                    status
+                  )}
+                  group by o.id 
+                  order by od.date desc;`;
+      }
+      const dataHistory = await dba(sql, [uid]);
+      // console.log(dataHistory);
+      return res.status(200).send(dataHistory);
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
+    }
+  },
+
+  getDetailHistory: async (req, res) => {
+    try {
+      const { id } = req.params;
+      let sql = `select o.id, p.name as name, o.users_id, u.uid, p.image, o.status, date_format(od.date,'%d %M %y') as date, 
+                  time_format(od.date, '%H:%i') as hour_, od.price, o.invoice_number as invoice, od.qty, o.users_id 
+                  from orders_detail od 
+                  join orders o on o.id = od.orders_id 
+                  join products p on od.product_id = p.id
+                  join users u on o.users_id = u.id 
+                  where o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending") and od.is_deleted = 0 and o.id = ?
+                  order by od.date desc;`;
+      const orderDetail = await dba(sql, [id]);
+      console.log(orderDetail);
+      return res.status(200).send(orderDetail);
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
     }
   },
 };

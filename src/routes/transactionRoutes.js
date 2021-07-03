@@ -14,6 +14,8 @@ const {
   getOrders,
   uploadPayment,
   getDetailOrders,
+  getHistory,
+  getDetailHistory,
 } = transactionController;
 
 router.post("/cart", verifyTokenAccess, addToCart);
@@ -29,5 +31,8 @@ router.post("/checkout", checkOut);
 router.get("/history/:users_id", getOrders);
 router.post("/uploadpayment/:orders_id", verifyTokenAccess, uploadPayment);
 router.get("/ordersdetail/:orders_id", getDetailOrders);
+router.get("/history", verifyTokenAccess, getHistory);
+router.get("/detailHistory/:id", getDetailHistory);
+router.patch("/editqty", editQty);
 
 module.exports = router;
