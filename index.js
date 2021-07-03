@@ -37,12 +37,13 @@ app.get("/", (req, res) => {
   res.send({ message: "REST API FOURNIR" });
 });
 
-const { authRoutes, adminRoutes, ProductRoutes, transactionRoutes } = require("./src/routes");
+const { authRoutes, adminRoutes, ProductRoutes, transactionRoutes, passwordRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/product", ProductRoutes);
 app.use("/transaction", transactionRoutes);
+app.use('/password', passwordRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send({ message: "resource not found" });

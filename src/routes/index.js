@@ -3,4 +3,5 @@ module.exports = {
   ProductRoutes: require("./ProductRoutes"),
   adminRoutes: require("./adminRoutes"),
   transactionRoutes: require("./transactionRoutes"),
+  passwordRoutes: require('./passwordRoutes')
 };
