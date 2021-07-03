@@ -447,8 +447,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-                          (parseInt(pages) - 1) * 10
-                        )},${mysqldb.escape(parseInt(limit))}`;
+        (parseInt(pages) - 1) * 10
+      )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
@@ -674,4 +674,40 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
+  getRevenue: (req, res) => {
+    const { startDate, endDate } = req.query;
+    let sql = `select sum(od.qty*od.price) as revenue from orders_detail od
+    join orders o on od.orders_id = o.id
+    where status in ('delivered', 'sending')`;
+    if (startDate && endDate) {
+      sql += ` and o.updated_at between '${startDate} 00:00:00' and '${endDate} 23:59:00'`;
+    }
+    mysqldb.query(sql, (error, result) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ message: 'Server error' });
+      }
+      if (!result.length) {
+        return res.status(204).send({ message: 'No data' });
+      }
+      return res.status(200).send(result);
+    });
+  },
+
+  potentialRevenue: (req, res) => {
+    let sql = `select sum(od.qty * od.price) as potentialRevenue from orders_detail od
+    join orders o on od.orders_id = o.id
+    where not o.status = 'on cart'`;
+    mysqldb.query(sql, (error, result) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ message: 'Server error' });
+      }
+      return res.status(200).send(result);
+    });
+  },
+
+
+
 };

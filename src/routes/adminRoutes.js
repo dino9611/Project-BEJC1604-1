@@ -13,14 +13,17 @@ const {
   getAllCategory,
   getAllLocation,
   getAllProductAdmin,
-  updateProduct,
   addProduct,
   deleteProduct,
+  updateProduct,
   getGender,
   getCategoryReport,
   getRevenueReport,
   getWarehouseSales,
   loginAdmin,
+  getRevenue,
+  potentialRevenue,
+  TransactionAdmin,
 } = adminController;
 
 router.get("/product", getProductAdmin);
@@ -40,5 +43,8 @@ router.get("/detail-transaction", verifyTokenAccess, DetailTransaction);
 router.get("/data-admin", verifyTokenAccess, GetDataAdmin);
 router.put("/confirm-transaction", verifyTokenAccess, ConfirmTransactionAdmin);
 router.put("/reject-transaction", verifyTokenAccess, RejectTransactionAdmin);
+router.get("/list-transaction", verifyTokenAccess, TransactionAdmin);
+router.get("/revenue", getRevenue);
+router.get("/potential", potentialRevenue);
 
 module.exports = router;
