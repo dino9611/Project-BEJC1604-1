@@ -95,11 +95,20 @@ module.exports = {
         // console.log(cart, "ini cart");
         return res.status(200).send({ ...dataUser[0], cart: cart });
       } else {
-        //disini ngodingnya untuk keeplogin admin
+        try {
+          sql = `select * from users where uid = ? `;
+          const dataAdmin = await dba(sql, [uid]);
+          // console.log('ini dataAdmin', dataAdmin[0]);
+          return res.status(200).send(dataAdmin[0]);
+
+        } catch (error) {
+          console.error(error);
+          return res.status(500).send({ message: 'Server error' });
+        }
       }
     } catch (error) {
       console.log(error);
-      return res.status(500).send({ message: "server error" });
+      return res.status(500).send({ message: "Server error" });
     }
   },
   Registration: async (req, res) => {
