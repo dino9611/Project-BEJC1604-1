@@ -37,7 +37,12 @@ app.get("/", (req, res) => {
   res.send({ message: "REST API FOURNIR" });
 });
 
-const { authRoutes, adminRoutes, ProductRoutes, transactionRoutes } = require("./src/routes");
+const {
+  authRoutes,
+  adminRoutes,
+  ProductRoutes,
+  transactionRoutes,
+} = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
