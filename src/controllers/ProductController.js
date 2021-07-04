@@ -20,27 +20,45 @@ module.exports = {
 
   getProductPaginate: async (req, res) => {
     try {
-      const { pages, limit, status } = req.query;
+      const { pages, limit, status, search, price } = req.query;
       let statusSql = "";
+      let searchSql = "";
+      let priceSql = "";
       if (!pages || !limit)
         return res.status(400).send({ message: "Pages/limit harus diisi" });
       if (status) {
         statusSql = `and c.category_name = ${mysqldb.escape(status)}`;
       }
+      if (search) {
+        searchSql = `and p.name like ${mysqldb.escape("%" + search + "%")}`;
+      }
+      if (price) {
+        if (price === "asc") {
+          priceSql = `order by p.price asc`;
+        } else if (price === "desc") {
+          priceSql = `order by p.price desc`;
+        }
+      }
+      // if(search)
       let sql = `select p.id, p.name, p.price, p.description, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
                         from products p 
                         left join products_location pl on p.id = pl.products_id 
                         left join warehouse w on pl.warehouse_id = w.id 
                         join category c on p.category_id = c.id 
-                        where p.is_deleted = 0 ${statusSql}
+                        where p.is_deleted = 0 ${statusSql} ${searchSql}
                         group by p.id 
+                        ${priceSql}
                         limit ${mysqldb.escape(
                           (parseInt(pages) - 1) * 12
                         )},${mysqldb.escape(parseInt(limit))}`;
+      console.log(searchSql);
+      console.log(statusSql);
+      console.log(priceSql);
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products p
               join category c on p.category_id = c.id
-              where p.is_deleted = 0 ${statusSql};`;
+              where p.is_deleted = 0 ${statusSql} ${searchSql}                        
+              ${priceSql};`;
       const countProduct = await dba(sql);
       return res.status(200).send({
         dataProduct,
