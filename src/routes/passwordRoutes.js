@@ -4,7 +4,7 @@ const { passwordController } = require('../controllers');
 
 const { changePassword, forgotPassword } = passwordController;
 
-router.patch('/change', changePassword);
-router.patch('/forgot', forgotPassword);
+router.patch('/change/:id', changePassword);
+router.put('/forgot', forgotPassword);
 
 module.exports = router;
