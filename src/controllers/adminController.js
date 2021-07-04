@@ -260,7 +260,8 @@ module.exports = {
               group by o.id
               order by o.updated_at desc
               limit ${parseInt(page) * parseInt(rowPerPage)},${parseInt(
-              rowPerPage)}`;
+          rowPerPage
+        )}`;
         const dataTransaction = await dba(sql, dataAdmin[0].warehouse_id);
         sql = `select count(*) as totalData
               from orders o
@@ -327,18 +328,18 @@ module.exports = {
       sql = `select od.qty, o.warehouse_id, od.product_id
             from orders o
             join orders_detail od on o.id = orders_id
-            where o.id = ?`
-      let dataOd = await dba(sql, id)
-      sql = `insert into products_location set ? `
-      for(let i = 0; i<dataOd.length; i++){
+            where o.id = ?`;
+      let dataOd = await dba(sql, id);
+      sql = `insert into products_location set ? `;
+      for (let i = 0; i < dataOd.length; i++) {
         let dataInput = {
           warehouse_id: dataOd[i].warehouse_id,
           orders_id: id,
           readyToSend: 1,
-          qty: -1*dataOd[i].qty,
-          products_id: dataOd[i].product_id
-        }
-        await dba (sql, dataInput)
+          qty: -1 * dataOd[i].qty,
+          products_id: dataOd[i].product_id,
+        };
+        await dba(sql, dataInput);
       }
       sql = `select u.id, concat(u.first_name,' ',u.last_name) as name, 
             u.role, r.role as warehouse, 
@@ -453,7 +454,7 @@ module.exports = {
             where pl.warehouse_id = ? and od.orders_id = ? and pl.readyToSend = 0
             group by od.product_id`;
       const dataOrders = await dba(sql, [dataAdmin[0].warehouse_id, orders_id]);
-      console.log(dataOrders)
+      console.log(dataOrders);
       return res.status(200).send(dataOrders);
     } catch (error) {
       return res.status(500).send(error);
@@ -462,7 +463,7 @@ module.exports = {
   GetLocationNearWarehouse: async (req, res) => {
     try {
       const { uid } = req.user;
-      const {productId} = req.query;
+      const { productId } = req.query;
       let sql = `select w.id, w.location as warehouse, w.latitude, w.longitude
                 from users u
                 join role r on r.id = u.role
@@ -473,12 +474,14 @@ module.exports = {
             join (select sum(pl.qty) as stock, pl.warehouse_id from products_location pl
             where pl.products_id = ? and pl.readyToSend = 0
             group by pl.warehouse_id) as pl on w.id = pl.warehouse_id
-            where not w.id = ?`
+            where not w.id = ?`;
       const dataWarehouse = await dba(sql, [productId, dataAdmin[0].id]);
-      let warehouseOrdered = geolib.orderByDistance({ latitude: dataAdmin[0].latitude, longitude: dataAdmin[0].longitude}, dataWarehouse);
+      let warehouseOrdered = geolib.orderByDistance(
+        { latitude: dataAdmin[0].latitude, longitude: dataAdmin[0].longitude },
+        dataWarehouse
+      );
       // console.log(warehouseOrdered)
       return res.status(200).send(warehouseOrdered);
-
     } catch (error) {
       return res.status(500).send(error);
     }
@@ -494,20 +497,20 @@ module.exports = {
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
 
-      transactionOrder.forEach( async (val) => {
+      transactionOrder.forEach(async (val) => {
         let dataInsert = {
           products_id: productId,
           orders_id: orders_id,
           qty: val.qtyReq,
           warehouse_destinationId: val.warehouse_id,
           warehouse_originId: dataAdmin[0].warehouse_id,
-          request_status: "propose"
-        }
-        sql = `insert into log_request set ?`
+          request_status: "propose",
+        };
+        sql = `insert into log_request set ?`;
         await dba(sql, [dataInsert]);
-      })
+      });
 
-      sql = `update orders_detail set on_request = 1 where product_id = ? and orders_id = ?`
+      sql = `update orders_detail set on_request = 1 where product_id = ? and orders_id = ?`;
       await dba(sql, [productId, orders_id]);
       return res.status(200).send({ message: "request berhasil dilakukan" });
     } catch (error) {
@@ -542,8 +545,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-        (parseInt(pages) - 1) * 10
-      )},${mysqldb.escape(parseInt(limit))}`;
+                          (parseInt(pages) - 1) * 10
+                        )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
@@ -781,10 +784,10 @@ module.exports = {
     mysqldb.query(sql, (error, result) => {
       if (error) {
         console.error(error);
-        return res.status(500).send({ message: 'Server error' });
+        return res.status(500).send({ message: "Server error" });
       }
       if (!result.length) {
-        return res.status(204).send({ message: 'No data' });
+        return res.status(204).send({ message: "No data" });
       }
       return res.status(200).send(result);
     });
@@ -797,12 +800,9 @@ module.exports = {
     mysqldb.query(sql, (error, result) => {
       if (error) {
         console.error(error);
-        return res.status(500).send({ message: 'Server error' });
+        return res.status(500).send({ message: "Server error" });
       }
       return res.status(200).send(result);
     });
   },
-
-
-
 };
