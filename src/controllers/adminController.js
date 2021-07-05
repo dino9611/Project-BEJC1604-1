@@ -314,4 +314,37 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
+  getRevenue: (req, res) => {
+    const { startDate, endDate } = req.query;
+    let sql = `select sum(od.qty*od.price) as revenue from orders_detail od
+    join orders o on od.orders_id = o.id
+    where status in ('delivered', 'sending')`;
+    if (startDate && endDate) {
+      sql += ` and o.updated_at between '${startDate} 00:00:00' and '${endDate} 23:59:00'`;
+    }
+    mysqldb.query(sql, (error, result) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ message: "Server error" });
+      }
+      if (!result.length) {
+        return res.status(204).send({ message: "No data" });
+      }
+      return res.status(200).send(result);
+    });
+  },
+
+  potentialRevenue: (req, res) => {
+    let sql = `select sum(od.qty * od.price) as potentialRevenue from orders_detail od
+    join orders o on od.orders_id = o.id
+    where not o.status = 'on cart'`;
+    mysqldb.query(sql, (error, result) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ message: "Server error" });
+      }
+      return res.status(200).send(result);
+    });
+  },
 };

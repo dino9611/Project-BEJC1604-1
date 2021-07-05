@@ -8,14 +8,17 @@ const {
   getAllCategory,
   getAllLocation,
   getAllProductAdmin,
-  updateProduct,
   addProduct,
   deleteProduct,
+  updateProduct,
   getGender,
   getCategoryReport,
   getRevenueReport,
   getWarehouseSales,
   loginAdmin,
+  getRevenue,
+  potentialRevenue,
+  TransactionAdmin,
 } = adminController;
 
 router.get("/product", getProductAdmin);
