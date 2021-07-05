@@ -37,9 +37,10 @@ module.exports = {
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
       if (dataAdmin[0]) {
-        sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime,
+        sql = `select date_format(o.updated_at, "%Y %M %d") as dateTime,
               concat(u.first_name,' ',u.last_name) as name,
               o.status,
+              o.bukti_pembayaran as bukti,
               o.invoice_number as invoice,
               sum(od.qty * od.price) as amountTotal,
               o.id,
