@@ -43,6 +43,7 @@ module.exports = {
           uid: dataAdmin[0].uid,
           role: dataAdmin[0].role,
         };
+        // console.log(dataToken);
         const tokenAccess = createAccessToken(dataToken);
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("X-Token-Access", tokenAccess);
@@ -201,14 +202,8 @@ module.exports = {
   Transaction: async (req, res) => {
     try {
       const { uid } = req.user;
-      const {
-        status,
-        rowPerPage,
-        page,
-        monthFrom,
-        monthTo,
-        warehouse_id,
-      } = req.query;
+      const { status, rowPerPage, page, monthFrom, monthTo, warehouse_id } =
+        req.query;
       let statusSql = "";
       let statusSqlSuper = "";
       let filterByDateSql = "";
