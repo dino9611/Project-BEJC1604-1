@@ -183,7 +183,6 @@ module.exports = {
             subject: `We need email confirmation for your account`,
             html: htmltoemail,
           });
-
           res.set("x-token-access", tokenAccess);
           res.set("x-token-refresh", tokenRefresh);
           return res.status(200).send({ ...datauser[0], cart: [] });
