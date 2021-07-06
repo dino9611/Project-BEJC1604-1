@@ -6,7 +6,14 @@ module.exports = {
   Transaction: async (req, res) => {
     try {
       const { uid } = req.user;
-      const { status, rowPerPage, page, monthFrom, monthTo, warehouse_id } = req.query;
+      const {
+        status,
+        rowPerPage,
+        page,
+        monthFrom,
+        monthTo,
+        warehouse_id,
+      } = req.query;
       let statusSql = "";
       let statusSqlSuper = "";
       let filterByDateSql = "";
@@ -56,16 +63,27 @@ module.exports = {
               group by o.id
               order by o.updated_at desc
               limit ${parseInt(page) * parseInt(rowPerPage)},${parseInt(
-              rowPerPage)}`;
+          rowPerPage
+        )}`;
         const dataTransaction = await dba(sql, dataAdmin[0].warehouse_id);
         sql = `select count(*) as totalData
               from orders o
               where warehouse_id = ${dataAdmin[0].warehouse_id}
               ${statusSql} ${filterByDateSql}`;
         let totalData = await dba(sql);
-        return res
-          .status(200)
-          .send({ dataTransaction, totalData: totalData[0].totalData, bukti: dataTransaction[0].bukti });
+        if (dataTransaction.length) {
+          return res.status(200).send({
+            dataTransaction,
+            totalData: totalData[0].totalData,
+            bukti: dataTransaction[0].bukti,
+          });
+        } else {
+          return res.status(200).send({
+            dataTransaction,
+            totalData: totalData[0].totalData,
+            bukti: null,
+          });
+        }
       } else {
         sql = `select u.role from users u
               join role r on r.id = u.role
@@ -88,7 +106,9 @@ module.exports = {
                 ${filterByWarehouse} ${statusSqlSuper} ${filterByDateSql}
                 group by o.id
                 order by o.updated_at desc
-                limit ${parseInt(page) * parseInt(rowPerPage)},${parseInt(rowPerPage)}`;
+                limit ${parseInt(page) * parseInt(rowPerPage)},${parseInt(
+            rowPerPage
+          )}`;
           const dataTransaction = await dba(sql);
           sql = `select count(*) as totalData
                 from orders o
