@@ -33,4 +33,6 @@ router.put("/product/all/:id", updateProduct);
 router.post("/product/all", addProduct);
 router.delete("/product/:id", deleteProduct);
 router.post("/login", loginAdmin);
+router.get("/potential", potentialRevenue);
+router.get("/revenue", getRevenue);
 module.exports = router;
