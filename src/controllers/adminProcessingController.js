@@ -83,4 +83,18 @@ module.exports = {
       return res.status(500).send(error);
     }
   },
+  SendingItem: async (req, res) => {
+    try {
+      const { rowId } = req.body;
+      let dataUpdate = {
+        status: "sending",
+      };
+      let sql = `update orders set ? where id = ?`;
+      await dba(sql, [dataUpdate, rowId]);
+      return res.status(200).send({ message: "sending berhasil dilakukan" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+  },
 };

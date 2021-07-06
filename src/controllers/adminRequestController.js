@@ -38,8 +38,7 @@ module.exports = {
       const dataRequest = await dba(sql, [dataAdmin[0].warehouse_id, dataAdmin[0].warehouse_id]);
       sql = `select count(*) as totalData
             from log_request lr
-            join products_location pl on lr.products_id = pl.products_id
-            where pl.warehouse_id = ?`;
+            where lr.warehouse_destinationId = ?`;
       let totalData = await dba(sql, dataAdmin[0].warehouse_id);
       return res.status(200).send({ dataRequest, totalData: totalData[0].totalData });
     } catch (error) {

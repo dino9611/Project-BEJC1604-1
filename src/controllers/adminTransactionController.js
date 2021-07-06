@@ -37,9 +37,10 @@ module.exports = {
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
       if (dataAdmin[0]) {
-        sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime,
+        sql = `select date_format(o.updated_at, "%Y %M %d") as dateTime,
               concat(u.first_name,' ',u.last_name) as name,
               o.status,
+              o.bukti_pembayaran as bukti,
               o.invoice_number as invoice,
               sum(od.qty * od.price) as amountTotal,
               o.id,
@@ -64,16 +65,17 @@ module.exports = {
         let totalData = await dba(sql);
         return res
           .status(200)
-          .send({ dataTransaction, totalData: totalData[0].totalData });
+          .send({ dataTransaction, totalData: totalData[0].totalData, bukti: dataTransaction[0].bukti });
       } else {
         sql = `select u.role from users u
               join role r on r.id = u.role
               where u.uid = ?`;
         const dataAdminSuper = await dba(sql, [uid]);
         if (dataAdminSuper[0]) {
-          sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime,
+          sql = `select date_format(o.updated_at, "%Y %M %d") as dateTime,
                 concat(u.first_name,' ',u.last_name) as name,
                 o.status,
+                o.bukti_pembayaran as bukti,
                 o.invoice_number as invoice,
                 sum(od.qty * od.price) as amountTotal,
                 o.id,
@@ -118,9 +120,7 @@ module.exports = {
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
       if (dataAdmin[0]) {
-        sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime, 
-              concat(hour(o.updated_at),".",minute(o.updated_at)) as hourTime,  
-              concat(u.first_name,' ',u.last_name) as name, 
+        sql = `select date_format(o.updated_at, "%H.%i") as hourTime, 
               o.status, p.name as productName, 
               c.category_name as category, 
               o.invoice_number, 
@@ -146,8 +146,7 @@ module.exports = {
               where u.uid = ?`;
         const dataAdminSuper = await dba(sql, [uid]);
         if (dataAdminSuper[0]) {
-          sql = `select concat(year(o.updated_at),"-",month(o.updated_at),"-",day(o.updated_at)) as dateTime, 
-                concat(hour(o.updated_at),".",minute(o.updated_at)) as hourTime,  
+          sql = `select date_format(o.updated_at, "%H.%i") as hourTime,  
                 concat(u.first_name,' ',u.last_name) as name, 
                 o.status, p.name as productName, 
                 c.category_name as category, 
