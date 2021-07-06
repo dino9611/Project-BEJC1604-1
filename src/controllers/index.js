@@ -10,4 +10,5 @@ module.exports = {
   adminProcessingController: require("./adminProcessingController"),
   adminRequestController: require("./adminRequestController"),
   passwordController: require("./passwordController"),
+  ProductsInOutController: require("./productsInOut"),
 };

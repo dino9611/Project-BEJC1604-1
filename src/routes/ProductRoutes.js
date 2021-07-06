@@ -13,5 +13,6 @@ router.get("/all", getAllProducts);
 router.get("/paging", getProductPaginate);
 router.get("/category", getCategory);
 router.get("/productDetail/:id", getProductDetail);
+router.get("/category", getCategory);
 
 module.exports = router;

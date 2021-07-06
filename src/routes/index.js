@@ -11,4 +11,5 @@ module.exports = {
   adminRequestRoutes: require("./adminRequestRoutes"),
 
   passwordRoutes: require("./passwordRoutes"),
+  productsInOutRoutes: require("./productsInOutRoutes"),
 };

@@ -382,7 +382,11 @@ module.exports = {
     try {
       const { uid } = req.user;
       const { status, search } = req.query;
+      let searchSql = "";
       console.log(req.user);
+      if (search) {
+        searchSql = `and p.name like ${mysqldb.escape("%" + search + "%")}`;
+      }
       let sql = `select o.id, p.name as name, u.uid, p.image, o.status, date_format(od.date,'%d %M %y') as date, 
                   time_format(od.date, '%H:%i') as hour_, sum(od.price*od.qty) as total_price, od.price, 
                   o.invoice_number as invoice, od.qty, o.users_id 
@@ -391,6 +395,7 @@ module.exports = {
                   left join products p on p.id = od.product_id 
                   join users u on o.users_id = u.id
                   where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending")
+                  ${searchSql}
                   group by o.id 
                   order by od.date desc;`;
       if (status) {
@@ -403,10 +408,11 @@ module.exports = {
                   join users u on o.users_id = u.id
                   where u.uid = ? and od.is_deleted = 0 and o.status = ${mysqldb.escape(
                     status
-                  )}
+                  )} ${searchSql}
                   group by o.id 
                   order by od.date desc;`;
       }
+
       const dataHistory = await dba(sql, [uid]);
       // console.log(dataHistory);
       return res.status(200).send(dataHistory);

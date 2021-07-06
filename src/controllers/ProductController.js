@@ -41,24 +41,24 @@ module.exports = {
       }
       // if(search)
       let sql = `select p.id, p.name, p.price, p.description, p.image, sum(pl.qty) as quantity, c.category_name as category, w.location  
-                        from products p 
-                        left join products_location pl on p.id = pl.products_id 
-                        left join warehouse w on pl.warehouse_id = w.id 
-                        join category c on p.category_id = c.id 
-                        where p.is_deleted = 0 ${statusSql} ${searchSql}
-                        group by p.id 
-                        ${priceSql}
-                        limit ${mysqldb.escape(
-                          (parseInt(pages) - 1) * 12
-                        )},${mysqldb.escape(parseInt(limit))}`;
+                          from products p 
+                          left join products_location pl on p.id = pl.products_id 
+                          left join warehouse w on pl.warehouse_id = w.id 
+                          join category c on p.category_id = c.id 
+                          where p.is_deleted = 0 ${statusSql} ${searchSql}
+                          group by p.id 
+                          ${priceSql}
+                          limit ${mysqldb.escape(
+                            (parseInt(pages) - 1) * 12
+                          )},${mysqldb.escape(parseInt(limit))}`;
       console.log(searchSql);
       console.log(statusSql);
       console.log(priceSql);
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products p
-              join category c on p.category_id = c.id
-              where p.is_deleted = 0 ${statusSql} ${searchSql}                        
-              ${priceSql};`;
+                join category c on p.category_id = c.id
+                where p.is_deleted = 0 ${statusSql} ${searchSql}                        
+                ${priceSql};`;
       const countProduct = await dba(sql);
       return res.status(200).send({
         dataProduct,

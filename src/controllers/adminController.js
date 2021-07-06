@@ -43,6 +43,7 @@ module.exports = {
           uid: dataAdmin[0].uid,
           role: dataAdmin[0].role,
         };
+        // console.log(dataToken);
         const tokenAccess = createAccessToken(dataToken);
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("X-Token-Access", tokenAccess);
