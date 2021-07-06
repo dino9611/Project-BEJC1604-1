@@ -82,7 +82,7 @@ module.exports = {
   KeepLogin: async (req, res) => {
     try {
       const { uid, role } = req.user;
-      if (role === 1 || 2 || 3 || 4 || 5) {
+      if (role === 1) {
         // console.log(req.user, "ini req.user");
         // console.log(uid, "ini uid");
         let sql = `select * from users where uid = ?`;
@@ -96,15 +96,15 @@ module.exports = {
         // console.log(cart, "ini cart");
         return res.status(200).send({ ...dataUser[0], cart: cart });
       } else {
+        //disini ngodingnya untuk keeplogin admin
         try {
           sql = `select * from users where uid = ? `;
           const dataAdmin = await dba(sql, [uid]);
           // console.log('ini dataAdmin', dataAdmin[0]);
           return res.status(200).send(dataAdmin[0]);
-
         } catch (error) {
           console.error(error);
-          return res.status(500).send({ message: 'Server error' });
+          return res.status(500).send({ message: "Server error" });
         }
       }
     } catch (error) {

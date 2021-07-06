@@ -9,4 +9,6 @@ module.exports = {
   adminTransactionRoutes: require("./adminTransactionRoutes"),
   adminProcessingRoutes: require("./adminProcessingRoutes"),
   adminRequestRoutes: require("./adminRequestRoutes"),
+
+  passwordRoutes: require("./passwordRoutes"),
 };
