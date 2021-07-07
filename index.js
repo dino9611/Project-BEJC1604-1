@@ -42,14 +42,14 @@ const {
   adminRoutes,
   ProductRoutes,
   transactionRoutes,
-  productsInOutRoutes,
+  ProductWarehouseRoutes,
 } = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/product", ProductRoutes);
 app.use("/transaction", transactionRoutes);
-app.use("/adminProd", productsInOutRoutes);
+app.use("/adminProd", ProductWarehouseRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send({ message: "resource not found" });
