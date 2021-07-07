@@ -4,4 +4,5 @@ module.exports = {
   ProductController: require("./ProductController"),
   transactionController: require("./transactionController"),
   ProductWarehouseController: require("./ProductWarehouseController"),
+  NewAdminController: require("./NewAdminController"),
 };

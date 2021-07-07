@@ -43,6 +43,7 @@ const {
   ProductRoutes,
   transactionRoutes,
   ProductWarehouseRoutes,
+  NewAdminRoutes,
 } = require("./src/routes");
 
 app.use("/auth", authRoutes);
@@ -50,6 +51,7 @@ app.use("/admin", adminRoutes);
 app.use("/product", ProductRoutes);
 app.use("/transaction", transactionRoutes);
 app.use("/adminProd", ProductWarehouseRoutes);
+app.use("/superAd", NewAdminRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send({ message: "resource not found" });
