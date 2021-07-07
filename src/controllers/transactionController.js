@@ -390,7 +390,7 @@ module.exports = {
                   left join orders_detail od on o.id = od.orders_id
                   left join products p on p.id = od.product_id 
                   join users u on o.users_id = u.id
-                  where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending")
+                  where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending", "delivered")
                   group by o.id 
                   order by od.date desc;`;
       if (status) {
@@ -424,7 +424,7 @@ module.exports = {
                   join orders o on o.id = od.orders_id 
                   join products p on od.product_id = p.id
                   join users u on o.users_id = u.id 
-                  where o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending") and od.is_deleted = 0 and o.id = ?
+                  where o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending", "delivered") and od.is_deleted = 0 and o.id = ?
                   order by od.date desc;`;
       const orderDetail = await dba(sql, [id]);
       console.log(orderDetail);
