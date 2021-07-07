@@ -18,7 +18,7 @@ module.exports = {
       sql = `select p.name as productName, od.product_id, od.qty, sum(pl.qty) as stock, od.on_request from orders_detail od
             join products_location pl on od.product_id = pl.products_id
             join products p on od.product_id = p.id
-            where pl.warehouse_id = ? and od.orders_id = ? and pl.readyToSend = 0
+            where pl.warehouse_id = ? and od.orders_id = ? and pl.readyToSend = 0 and od.is_deleted = 0
             group by od.product_id`;
       const dataOrders = await dba(sql, [dataAdmin[0].warehouse_id, orders_id]);
       return res.status(200).send(dataOrders);
@@ -85,12 +85,23 @@ module.exports = {
   },
   SendingItem: async (req, res) => {
     try {
-      const { rowId } = req.body;
+      const { row, transaction, transactionDetail } = req.body;
+      transactionDetail.forEach(async (val) => {
+        let dataInsert = {
+          product_id: val.product_id,
+          warehouse_id: transaction[0].warehouse_id,
+          qty: val.qty,
+          orders_id: row.orders_id,
+          status: "out"
+        };
+        sql = `insert into warehouse_log set ?`;
+        await dba(sql, [dataInsert]);
+      });
       let dataUpdate = {
         status: "sending",
       };
-      let sql = `update orders set ? where id = ?`;
-      await dba(sql, [dataUpdate, rowId]);
+      sql = `update orders set ? where id = ?`;
+      await dba(sql, [dataUpdate, row.orders_id]);
       return res.status(200).send({ message: "sending berhasil dilakukan" });
     } catch (error) {
       console.log(error);
