@@ -12,7 +12,8 @@ const handlebars = require("handlebars");
 const transporter = require("./../helpers/transporter");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
-const geolib = require("geolib");
+const { uploader } = require("../helpers");
+const multer = require('multer');
 
 const dbprom = (query, arr = []) => {
   return new Promise((resolve, reject) => {
@@ -43,7 +44,7 @@ module.exports = {
       if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
       }
-      let sql = `select * from users where (email = ? or username = ?) and password = ?`;
+      let sql = `select * from users where (email = ? or username = ?) and password = ? and role = '1'`;
       let dataUser = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
@@ -211,7 +212,7 @@ module.exports = {
   },
   getUser: (req, res) => {
     const { id } = req.params;
-    let sql = `select id, first_name, last_name, email, phone_number, age from users where id = ?`;
+    let sql = `select id, first_name, last_name, email, phone_number, age, photo from users where id = ?`;
     mysqldb.query(sql, [id], (error, result) => {
       if (error) return res.status(500).send(error);
       return res.status(200).send(result);
@@ -414,6 +415,51 @@ module.exports = {
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: "server error" });
+    }
+  },
+  uploadPhoto: async (req, res) => {
+    // upload photo
+    try {
+      const { id } = req.params;
+      const path = '/user';
+
+      const upload = uploader(path, "PROFILE").fields([{ name: "photo" }]);
+      upload(req, res, async (error) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Upload photo failed!", error: error.message });
+        }
+        console.log("success");
+        console.log('ini req.files', req.files);
+        const { photo } = req.files;
+        const imagePath = photo ? path + "/" + photo[0].filename : null;
+        console.log(imagePath);
+        const dataUpdate = {
+          photo: imagePath
+        };
+        try {
+          let sql = `select photo from users where id = ?`;
+          const fotoLama = await dba(sql, id);
+          sql = `update users set ? where id = ?`;
+          await dba(sql, [dataUpdate, id]);
+          if (imagePath && imagePath != '/user/user-profile-default.jpg') {
+            fs.unlinkSync("./public" + fotoLama[0].photo);
+          }
+          sql = `select photo from users where id = ?`;
+          const result = await dba(sql, id);
+          return res.status(201).send(result);
+        } catch (error) {
+          console.error(error);
+          if (imagePath) {
+            fs.unlinkSync("./public" + imagePath);
+          }
+          return res.status(500).send({ message: "Server error" });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "Server error" });
     }
   },
 };
