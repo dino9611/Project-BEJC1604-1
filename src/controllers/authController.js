@@ -418,7 +418,7 @@ module.exports = {
     }
   },
   uploadPhoto: async (req, res) => {
-    // upload photo
+    // upload photo & edit photo profile
     try {
       const { id } = req.params;
       const path = '/user';
