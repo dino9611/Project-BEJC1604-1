@@ -13,7 +13,7 @@ const transporter = require("./../helpers/transporter");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
 const { uploader } = require("../helpers");
-const multer = require('multer');
+const multer = require("multer");
 
 const dbprom = (query, arr = []) => {
   return new Promise((resolve, reject) => {
@@ -421,7 +421,7 @@ module.exports = {
     // upload photo & edit photo profile
     try {
       const { id } = req.params;
-      const path = '/user';
+      const path = "/user";
 
       const upload = uploader(path, "PROFILE").fields([{ name: "photo" }]);
       upload(req, res, async (error) => {
@@ -431,19 +431,22 @@ module.exports = {
             .json({ message: "Upload photo failed!", error: error.message });
         }
         console.log("success");
-        console.log('ini req.files', req.files);
+        console.log("ini req.files", req.files);
         const { photo } = req.files;
         const imagePath = photo ? path + "/" + photo[0].filename : null;
         console.log(imagePath);
         const dataUpdate = {
-          photo: imagePath
+          photo: imagePath,
         };
         try {
           let sql = `select photo from users where id = ?`;
           const fotoLama = await dba(sql, id);
           sql = `update users set ? where id = ?`;
           await dba(sql, [dataUpdate, id]);
-          if (imagePath && imagePath != '/user/user-profile-default.jpg') {
+          if (
+            imagePath &&
+            fotoLama[0].photo != "/user/user-profile-default.jpg"
+          ) {
             fs.unlinkSync("./public" + fotoLama[0].photo);
           }
           sql = `select photo from users where id = ?`;
