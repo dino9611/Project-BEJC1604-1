@@ -20,7 +20,8 @@ module.exports = {
                     join category c on p.category_id = c.id
                     join role r on w.role_id = r.id 
                     join users u on u.role = r.id
-                    where r.role = ? ${statusSql};`;
+                    where r.role = ? ${statusSql} 
+                    group by wl.id;`;
       const dataProducts = await dba(sql, [role]);
       console.log(dataProducts);
       return res.status(200).send(dataProducts);
