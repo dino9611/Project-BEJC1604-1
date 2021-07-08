@@ -239,7 +239,6 @@ module.exports = {
       return res.status(500).send({ message: "Server error" });
     }
   },
-
   getOrders: async (req, res) => {
     try {
       const { users_id } = req.params;
@@ -268,7 +267,7 @@ module.exports = {
             .status(500)
             .json({ message: "Upload photo failed!", error: error.message });
         }
-        console.log("berhasil");
+        console.log("success");
         console.log(req.files);
         const { photo } = req.files;
         const imagePath = photo ? path + "/" + photo[0].filename : null;
@@ -407,8 +406,8 @@ module.exports = {
                   left join products p on p.id = od.product_id 
                   join users u on o.users_id = u.id
                   where u.uid = ? and od.is_deleted = 0 and o.status = ${mysqldb.escape(
-                    status
-                  )} ${searchSql}
+          status
+        )} ${searchSql}
                   group by o.id 
                   order by od.date desc;`;
       }

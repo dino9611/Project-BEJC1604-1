@@ -17,7 +17,9 @@ const {
   sendEmailVerification,
   getAddress,
   defaultAddress,
-  deleteAddress
+  deleteAddress,
+  getDefaultPhoto,
+  uploadPhoto
 } = authController;
 
 router.post("/login", Login);
@@ -32,5 +34,6 @@ router.post("/addData/:id", addPersonalData);
 router.post("/addAddress/:users_id", addAddress);
 router.post('/defaultaddress/:address_id/:users_id', defaultAddress);
 router.delete('/address/delete/:address_id/:users_id', deleteAddress);
+router.post('/uploadphoto/:id', verifyTokenAccess, uploadPhoto);
 
 module.exports = router;
