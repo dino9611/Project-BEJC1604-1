@@ -3,7 +3,7 @@ let transporter = createTransport({
   service: "gmail",
   auth: {
     user: "omiputrakarunia@gmail.com",
-    pass: "pnaumgzxuuwkyivx",
+    pass: "tomwgkkyfomfdxmi",
   },
   tls: {
     rejectUnauthorized: false,
