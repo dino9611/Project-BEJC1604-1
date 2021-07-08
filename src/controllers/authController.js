@@ -443,7 +443,7 @@ module.exports = {
           const fotoLama = await dba(sql, id);
           sql = `update users set ? where id = ?`;
           await dba(sql, [dataUpdate, id]);
-          if (imagePath && imagePath != '/user/user-profile-default.jpg') {
+          if (imagePath && fotoLama[0].photo != '/user/user-profile-default.jpg') {
             fs.unlinkSync("./public" + fotoLama[0].photo);
           }
           sql = `select photo from users where id = ?`;
