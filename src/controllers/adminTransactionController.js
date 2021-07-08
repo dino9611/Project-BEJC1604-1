@@ -155,7 +155,7 @@ module.exports = {
               join category c on p.category_id = c.id
               join warehouse w on o.warehouse_id = w.id
               join users u on u.id = o.users_id
-              where o.warehouse_id = ? and od.orders_id = ${orders_id}`;
+              where o.warehouse_id = ? and od.orders_id = ${orders_id} and od.is_deleted = 0`;
         const dataTransaction = await dba(sql, dataAdmin[0].warehouse_id);
         return res.status(200).send(dataTransaction);
       } else {
@@ -205,8 +205,8 @@ module.exports = {
       await dba(sql, [dataUpdate, id]);
       sql = `select od.qty, o.warehouse_id, od.product_id
             from orders o
-            join orders_detail od on o.id = orders_id
-            where o.id = ?`;
+            join orders_detail od on o.id = orders_id 
+            where o.id = ? and od.is_deleted = 0`;
       let dataOd = await dba(sql, id);
       sql = `insert into products_location set ? `;
       for (let i = 0; i < dataOd.length; i++) {

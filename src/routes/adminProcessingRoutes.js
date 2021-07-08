@@ -13,5 +13,5 @@ const {
 router.get("/processing-product", verifyTokenAccess, ProcessingProduct);
 router.get("/warehouse-location", verifyTokenAccess, GetLocationNearestWarehouse);
 router.post("/request-stock", verifyTokenAccess, RequestStockToAnotherWarehouse);
-router.put("/sending-item", SendingItem);
+router.post("/sending-item", verifyTokenAccess, SendingItem);
 module.exports = router;

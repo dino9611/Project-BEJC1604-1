@@ -439,6 +439,20 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
+  acceptedOrder: async (req, res) => {
+    try {
+      const { status, row } = req.body;
+      let dataUpdate = {
+        status: status,
+      }
+      let sql = `update orders set ? where invoice_number = ? and id = ?`;
+      await dba(sql, [dataUpdate, row.invoice, row.id]);
+      return res.status(200).send({ message: "berhasil" });
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
+    }
+  },
 };
 
 // update bukti pembayaran, status, invoice number where orders.id
