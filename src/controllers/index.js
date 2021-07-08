@@ -12,4 +12,5 @@ module.exports = {
   passwordController: require("./passwordController"),
 
   ProductWarehouseController: require("./ProductWarehouseController"),
+  NewAdminController: require("./NewAdminController"),
 };
