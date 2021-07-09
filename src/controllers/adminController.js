@@ -51,8 +51,7 @@ module.exports = {
         return res.status(200).send({ dataAdmin: dataAdmin[0] });
       } else {
         return res.status(400).send({
-          message:
-            "email or password wrong",
+          message: "email or password wrong",
         });
       }
     } catch (error) {
@@ -88,8 +87,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-        (parseInt(pages) - 1) * 10
-      )},${mysqldb.escape(parseInt(limit))}`;
+                          parseInt(pages) * 10
+                        )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
@@ -97,6 +96,7 @@ module.exports = {
         .status(200)
         .send({ dataProduct, totaldata: countProduct[0].totaldata });
     } catch (error) {
+      console.log(error);
       return res.status(500).send(error);
     }
   },
