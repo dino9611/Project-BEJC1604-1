@@ -58,8 +58,15 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'awaiting payment' and users_id = ?`;
+        let transaction = await dba(sql, [dataUser[0].id]);
+        // let cart = await dba(sql);
         // let cart = await dba(sql);
         console.log("ini cart user (login)", cart);
+        console.log("ini cart user (transaction)", transaction);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -68,7 +75,7 @@ module.exports = {
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("x-token-access", tokenAccess);
         res.set("x-token-refresh", tokenRefresh);
-        return res.status(200).send({ ...dataUser[0], cart: cart });
+        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
         return res.status(500).send({
           message:
@@ -94,8 +101,13 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ? and od.is_deleted = 0`;
         let cart = await dbprom(sql, dataUser[0].id);
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'awaiting payment' and users_id = ?`;
+        let transaction = await dba(sql, [dataUser[0].id]);
         // console.log(cart, "ini cart");
-        return res.status(200).send({ ...dataUser[0], cart: cart });
+        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
         //disini ngodingnya untuk keeplogin admin
         try {
