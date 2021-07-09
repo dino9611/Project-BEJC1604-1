@@ -19,7 +19,7 @@ join products p on od.product_id = p.id
 where o.status = 'onCart' and users_id = ? and od.is_deleted = 0;`;
 
 const generateInvoice = (orders_id, users_id) => {
-  return "TRX" + orders_id + new Date().getTime() + users_id;
+  return "TRX-" + orders_id + new Date().getFullYear() + '' + new Date().getMonth() + '' + new Date().getDate() + users_id;
 };
 
 module.exports = {
@@ -242,7 +242,7 @@ module.exports = {
   getOrders: async (req, res) => {
     try {
       const { users_id } = req.params;
-      let sql = `select o.*, b.name, b.account_number, sum(od.qty * od.price) as total from orders o 
+      let sql = `select o.*, b.name, b.account_number, b.logo, sum(od.qty * od.price) as total from orders o 
             join bank b on b.id = o.bank_id
             join orders_detail od on od.orders_id = o.id
             where status = 'awaiting payment' and users_id = ?
@@ -454,10 +454,3 @@ module.exports = {
   },
 };
 
-// update bukti pembayaran, status, invoice number where orders.id
-// get orders_detail where by orders.id
-// ambilnya qyt dan products_id
-// karena mau insert lebih dari 1 row makanya dilooping, yg di looping data dari orders detail
-// ubah readyToSend jadi 1
-
-// data yang di insert qty, product_id, warehouse_id, orders_id, readyToSend

@@ -18,7 +18,7 @@ module.exports = {
   },
   createForgotPassToken: (data) => {
     const key = "fournir-forgot";
-    const token = jwt.sign(data, key, { expiresIn: '5m' });
+    const token = jwt.sign(data, key, { expiresIn: '10m' });
     return token;
   }
 };
