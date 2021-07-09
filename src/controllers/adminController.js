@@ -51,8 +51,7 @@ module.exports = {
         return res.status(200).send({ dataAdmin: dataAdmin[0] });
       } else {
         return res.status(400).send({
-          message:
-            "email or password wrong",
+          message: "email or password wrong",
         });
       }
     } catch (error) {
@@ -88,8 +87,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-        (parseInt(pages) - 1) * 10
-      )},${mysqldb.escape(parseInt(limit))}`;
+                          (parseInt(pages) - 1) * 10
+                        )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
@@ -351,20 +350,63 @@ module.exports = {
 
   getListWarehouse: async (req, res) => {
     try {
-      let sql = `select w.location, w.latitude, w.longitude, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
-                join orders o on w.id = o.warehouse_id
-                join (
-                select u.role, w.location, count(u.role) as totalAdmin from users u
-                join warehouse w on w.role_id = u.role
+      let sql = `select w.*, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
+                left join orders o on w.id = o.warehouse_id
+                left join (
+                select u.role, w.location, count(u.role) as totalAdmin
+                from warehouse w
+                left join users u on w.role_id = u.role
                 group by w.id
                 ) as ot on ot.location = w.location
                 group by w.id`;
-      const listWarehouse = await dba(sql)
+      const listWarehouse = await dba(sql);
       return res.status(200).send(listWarehouse);
     } catch (error) {
       console.log(error);
       return res.status(500).send(error);
     }
+  },
 
-  }
+  addWarehouse: async (req, res) => {
+    try {
+      const { location, latitude, longitude, warehouse } = req.body;
+      let listRole = [];
+      let sql = `select w.*, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
+                left join orders o on w.id = o.warehouse_id
+                left join (
+                select u.role, w.location, count(u.role) as totalAdmin
+                from warehouse w
+                left join users u on w.role_id = u.role
+                group by w.id
+                ) as ot on ot.location = w.location
+                group by w.id`;
+      const getListWarehouse = await dba(sql);
+      getListWarehouse.forEach(async (val, index) => {
+        return listRole.push(val.role_id);
+      });
+      sql = `select * from warehouse w
+                where w.location = "${location}" 
+                or w.latitude = ?
+                or w.longitude = ?`;
+
+      let listWarehouse = await dba(sql, [latitude, longitude]);
+      let role_id = Math.max(...listRole) + 1;
+      if (listWarehouse.length) {
+        return res.status(200).send({ message: "Warehouse already exists" });
+      } else {
+        let dataInsert = {
+          location: location,
+          latitude: latitude,
+          longitude: longitude,
+          role_id: role_id,
+        };
+        sql = `insert into warehouse set ?`;
+        await dba(sql, [dataInsert]);
+        return res.status(200).send({ message: "Warehouse added successfully" });
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+  },
 };

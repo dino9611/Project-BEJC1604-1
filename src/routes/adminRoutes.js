@@ -18,7 +18,8 @@ const {
   loginAdmin,
   getRevenue,
   potentialRevenue,
-  getListWarehouse
+  getListWarehouse,
+  addWarehouse
 } = adminController;
 
 router.get("/product", getProductAdmin);
@@ -31,6 +32,7 @@ router.get("/revenueReport", getRevenueReport);
 router.get("/warehouseReport", getWarehouseSales);
 router.put("/product/all/:id", updateProduct);
 router.post("/product/all", addProduct);
+router.post("/add-warehouse", verifyTokenAccess, addWarehouse);
 router.delete("/product/:id", deleteProduct);
 router.post("/login", loginAdmin);
 router.get("/potential", potentialRevenue);
