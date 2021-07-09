@@ -348,4 +348,23 @@ module.exports = {
       return res.status(200).send(result);
     });
   },
+
+  getListWarehouse: async (req, res) => {
+    try {
+      let sql = `select w.location, w.latitude, w.longitude, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
+                join orders o on w.id = o.warehouse_id
+                join (
+                select u.role, w.location, count(u.role) as totalAdmin from users u
+                join warehouse w on w.role_id = u.role
+                group by w.id
+                ) as ot on ot.location = w.location
+                group by w.id`;
+      const listWarehouse = await dba(sql)
+      return res.status(200).send(listWarehouse);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+
+  }
 };
