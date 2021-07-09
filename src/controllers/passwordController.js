@@ -54,9 +54,7 @@ module.exports = {
           subject: `Please change your password`,
           html: htmlToEmail,
         });
-        return res
-          .status(200)
-          .send({ message: "A reset link has sent to your email!" });
+        return res.status(200).send({ message: "A reset link has sent to your email" });
       } else {
         return res.status(400).send({ message: "Email unregistered" });
       }

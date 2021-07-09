@@ -19,7 +19,7 @@ module.exports = {
     try {
       const { emailOrUsername, password } = req.body;
       if (!emailOrUsername || !password) {
-        return res.status(400).send({ message: "bad request" });
+        return res.status(400).send({ message: "All input can not be empty" });
       }
       let sql = `select * from users where (email = ? or username = ?) and password = ? and not role = 1 and is_deleted = 1`;
       const deletedAdmin = await dba(sql, [
@@ -52,7 +52,7 @@ module.exports = {
       } else {
         return res.status(400).send({
           message:
-            "The username or password you entered does not match our records. Please check and try again.",
+            "email or password wrong",
         });
       }
     } catch (error) {
@@ -88,8 +88,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-                          (parseInt(pages) - 1) * 10
-                        )},${mysqldb.escape(parseInt(limit))}`;
+        (parseInt(pages) - 1) * 10
+      )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
