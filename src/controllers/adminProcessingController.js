@@ -99,7 +99,7 @@ module.exports = {
         let dataUpdate = {
           readyToSend: 0
         };
-        sql = `update products_location set ? where orders_id = ? and warehouse_id = ? and products_id = ? and readyToSend = 0`;
+        sql = `update products_location set ? where orders_id = ? and warehouse_id = ? and products_id = ? and readyToSend = 1`;
         await dba(sql, [dataUpdate, row.orders_id, transaction[0].warehouse_id, val.product_id]);
       });
       let dataUpdate = {
