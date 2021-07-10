@@ -402,15 +402,20 @@ module.exports = {
                 or w.longitude = ?`;
 
       let listWarehouse = await dba(sql, [latitude, longitude]);
-      let role_id = Math.max(...listRole) + 1;
+      // let role_id = Math.max(...listRole) + 1;
       if (listWarehouse.length) {
         return res.status(200).send({ message: "Warehouse already exists" });
       } else {
         let dataInsert = {
+          role: "admin_" + location,
+        };
+        sql = `insert into role set ?`;
+        let datarole = await dba(sql, [dataInsert]);
+        dataInsert = {
           location: location,
           latitude: latitude,
           longitude: longitude,
-          role_id: role_id,
+          role_id: datarole.insertId,
         };
         sql = `insert into warehouse set ?`;
         await dba(sql, [dataInsert]);
