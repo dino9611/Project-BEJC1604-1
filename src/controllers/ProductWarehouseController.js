@@ -12,16 +12,13 @@ module.exports = {
       if (status) {
         statusSql = `and wl.status = ${mysqldb.escape(status)}`;
       }
-      let sql = `select p.name, p.price, p.description, p.image, c.category_name, r.role, wl.qty, wl.status, w.location, 
-                    date_format(wl.created_at,'%d-%m-%y') as date, time_format(wl.created_at, '%H:%i') as hour_
-                    from warehouse_log wl
-                    join products p on wl.product_id = p.id
-                    join warehouse w on wl.warehouse_id = w.id
-                    join category c on p.category_id = c.id
-                    join role r on w.role_id = r.id 
-                    join users u on u.role = r.id
-                    where r.role = ? ${statusSql} 
-                    group by wl.id;`;
+      let sql = `select p.name, p.price, p.description, p.image, c.category_name, wl.qty, wl.status, w.location, 
+                  date_format(wl.created_at,'%d-%m-%y') as date, time_format(wl.created_at, '%H:%i') as hour_
+                  from warehouse_log wl
+                  join products p on wl.product_id = p.id
+                  join warehouse w on wl.warehouse_id = w.id
+                  join category c on p.category_id = c.id
+                  where w.role_id = ? ${statusSql};`;
       const dataProducts = await dba(sql, [role]);
       console.log(dataProducts);
       return res.status(200).send(dataProducts);
@@ -39,7 +36,7 @@ module.exports = {
                   left join (select sum(qty) as stock, products_id, r.role from products_location pl
                   join warehouse w on pl.warehouse_id = w.id
                   join role r on r.id = w.role_id
-                  where r.role = ? and readyToSend = 0
+                  where w.role_id = ? and readyToSend = 0
                   group by products_id) as pl on pl.products_id = p.id
                   join category c on c.id = p.category_id
                   where p.is_deleted = 0 limit ${
@@ -67,14 +64,14 @@ module.exports = {
       console.log(data);
       let sql = `select w.id from role r
                   join warehouse w on w.role_id = r.id
-                  where r.role = ?;`;
+                  where w.role_id = ?;`;
       const dataAdmin = await dba(sql, [role]);
       console.log(dataAdmin);
       sql = `select ifnull(stock, 0) as stock from products p
               left join (select sum(qty) as stock, products_id, r.role from products_location pl
               join warehouse w on pl.warehouse_id = w.id
               join role r on r.id = w.role_id
-              where r.role = ? and readyToSend = 0
+              where w.role_id = ? and readyToSend = 0
               group by products_id) as pl on pl.products_id = p.id
               join category c on c.id = p.category_id
               where p.is_deleted = 0 and p.id = ?;`;

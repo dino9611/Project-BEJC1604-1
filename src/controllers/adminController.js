@@ -32,7 +32,7 @@ module.exports = {
           message: "Admin account is deleted, please contact Super Admin!",
         });
       }
-      sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
+      sql = `select u.uid, u.username, r.role, r.id as role_id from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
       let dataAdmin = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
@@ -41,7 +41,7 @@ module.exports = {
       if (dataAdmin.length) {
         let dataToken = {
           uid: dataAdmin[0].uid,
-          role: dataAdmin[0].role,
+          role: dataAdmin[0].role_id,
         };
         // console.log(dataToken);
         const tokenAccess = createAccessToken(dataToken);
