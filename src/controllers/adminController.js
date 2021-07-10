@@ -32,7 +32,7 @@ module.exports = {
           message: "Admin account is deleted, please contact Super Admin!",
         });
       }
-      sql = `select u.uid, u.username, r.role from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
+      sql = `select u.uid, u.username, r.role, r.id as role_id from users u join role r on r.id = u.role where (u.email = ? or u.username = ?) and u.password = ? and not u.role = 1 and u.is_deleted = 0`;
       let dataAdmin = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
@@ -41,7 +41,7 @@ module.exports = {
       if (dataAdmin.length) {
         let dataToken = {
           uid: dataAdmin[0].uid,
-          role: dataAdmin[0].role,
+          role: dataAdmin[0].role_id,
         };
         // console.log(dataToken);
         const tokenAccess = createAccessToken(dataToken);
@@ -77,20 +77,31 @@ module.exports = {
 
   getProductAdmin: async (req, res) => {
     try {
-      const { pages, limit } = req.query;
+      const { pages, limit, status, search } = req.query;
+      let statusSql = "";
+      let searchSql = "";
       if (!pages || !limit)
         return res.status(400).send({ message: "Pages/limit harus diisi" });
-      let sql = `select p.id, p.name, p.price, p.image, p.category_id, sum(pl.qty) as quantity, c.category_name as category, w.location  
+      if (status) {
+        statusSql = `and c.category_name = ${mysqldb.escape(status)}`;
+      }
+      if (search) {
+        searchSql = `and p.name like ${mysqldb.escape("%" + search + "%")}`;
+      }
+      let sql = `select p.id, p.name, p.price, p.image, p.category_id, ifnull(sum(pl.qty), 0) as quantity, c.category_name as category, w.location  
                         from products p 
                         left join products_location pl on p.id = pl.products_id 
                         left join warehouse w on pl.warehouse_id = w.id 
                         join category c on p.category_id = c.id 
-                        where p.is_deleted = 0 group by p.id 
+                        where p.is_deleted = 0 ${statusSql} ${searchSql} 
+                        group by p.id 
                         limit ${mysqldb.escape(
-                          parseInt(pages) * 10
+                          parseInt(pages) * parseInt(limit)
                         )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
-      sql = `select count(*) as totaldata from products where is_deleted = 0`;
+      sql = `select count(*) as totaldata from products p
+              join category c on p.category_id = c.id
+              where p.is_deleted = 0 ${statusSql} ${searchSql}`;
       const countProduct = await dba(sql);
       return res
         .status(200)

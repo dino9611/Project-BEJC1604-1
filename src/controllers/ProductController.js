@@ -49,7 +49,7 @@ module.exports = {
                           group by p.id 
                           ${priceSql}
                           limit ${mysqldb.escape(
-                            (parseInt(pages) - 1) * 12
+                            (parseInt(pages) - 1) * parseInt(limit)
                           )},${mysqldb.escape(parseInt(limit))}`;
       console.log(searchSql);
       console.log(statusSql);

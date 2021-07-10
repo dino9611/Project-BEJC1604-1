@@ -21,7 +21,7 @@ const {
   TransactionAdmin,
 } = adminController;
 
-router.get("/product", getProductAdmin);
+router.get("/product", verifyTokenAccess, getProductAdmin);
 router.get("/product/all", getAllProductAdmin);
 router.get("/category", getAllCategory);
 router.get("/location", getAllLocation);
