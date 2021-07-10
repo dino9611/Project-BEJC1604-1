@@ -359,4 +359,68 @@ module.exports = {
       return res.status(200).send(result);
     });
   },
+
+  getListWarehouse: async (req, res) => {
+    try {
+      let sql = `select w.*, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
+                left join orders o on w.id = o.warehouse_id
+                left join (
+                select u.role, w.location, count(u.role) as totalAdmin
+                from warehouse w
+                left join users u on w.role_id = u.role
+                group by w.id
+                ) as ot on ot.location = w.location
+                group by w.id`;
+      const listWarehouse = await dba(sql);
+      return res.status(200).send(listWarehouse);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+  },
+
+  addWarehouse: async (req, res) => {
+    try {
+      const { location, latitude, longitude, warehouse } = req.body;
+      let listRole = [];
+      let sql = `select w.*, count(o.warehouse_id) as totalOrders, ot.totalAdmin as totalAdmin from warehouse w
+                left join orders o on w.id = o.warehouse_id
+                left join (
+                select u.role, w.location, count(u.role) as totalAdmin
+                from warehouse w
+                left join users u on w.role_id = u.role
+                group by w.id
+                ) as ot on ot.location = w.location
+                group by w.id`;
+      const getListWarehouse = await dba(sql);
+      getListWarehouse.forEach(async (val, index) => {
+        return listRole.push(val.role_id);
+      });
+      sql = `select * from warehouse w
+                where w.location = "${location}" 
+                or w.latitude = ?
+                or w.longitude = ?`;
+
+      let listWarehouse = await dba(sql, [latitude, longitude]);
+      let role_id = Math.max(...listRole) + 1;
+      if (listWarehouse.length) {
+        return res.status(200).send({ message: "Warehouse already exists" });
+      } else {
+        let dataInsert = {
+          location: location,
+          latitude: latitude,
+          longitude: longitude,
+          role_id: role_id,
+        };
+        sql = `insert into warehouse set ?`;
+        await dba(sql, [dataInsert]);
+        return res
+          .status(200)
+          .send({ message: "Warehouse added successfully" });
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send(error);
+    }
+  },
 };
