@@ -15,12 +15,13 @@ module.exports = {
                 join warehouse w on w.role_id = u.role
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
-      sql = `select p.name as productName, od.product_id, od.qty, sum(pl.qty) as stock, od.on_request from orders_detail od
-            join products_location pl on od.product_id = pl.products_id
-            join products p on od.product_id = p.id
-            where pl.warehouse_id = ? and od.orders_id = ? and pl.readyToSend = 0 and od.is_deleted = 0
-            group by od.product_id`;
+      sql = `select p.name as productName, od.product_id, od.qty, ifnull(stock,0) as stock, od.on_request from orders_detail od left join (select sum(qty) as stock,products_id from products_location 
+      where readyToSend = 0 and warehouse_id = ?  group by products_id) as pl
+      on od.product_id = pl.products_id 
+      left join products p on od.product_id = p.id
+      where od.orders_id = ?  and od.is_deleted = 0`;
       const dataOrders = await dba(sql, [dataAdmin[0].warehouse_id, orders_id]);
+      console.log(dataOrders);
       return res.status(200).send(dataOrders);
     } catch (error) {
       console.log(error);
@@ -63,7 +64,11 @@ module.exports = {
                 join warehouse w on w.role_id = u.role
                 where u.uid = ?`;
       const dataAdmin = await dba(sql, [uid]);
-      transactionOrder.forEach(async (val) => {
+      // filter qtyReq yang bukan 0
+      let newTransactionOrder = transactionOrder.filter(
+        (val) => val.qtyReq > 0
+      );
+      newTransactionOrder.forEach(async (val) => {
         let dataInsert = {
           products_id: productId,
           orders_id: orders_id,
@@ -92,15 +97,20 @@ module.exports = {
           warehouse_id: transaction[0].warehouse_id,
           qty: val.qty,
           orders_id: row.orders_id,
-          status: "out"
+          status: "out",
         };
         sql = `insert into warehouse_log set ?`;
         await dba(sql, [dataInsert]);
         let dataUpdate = {
-          readyToSend: 0
+          readyToSend: 0,
         };
         sql = `update products_location set ? where orders_id = ? and warehouse_id = ? and products_id = ? and readyToSend = 1`;
-        await dba(sql, [dataUpdate, row.orders_id, transaction[0].warehouse_id, val.product_id]);
+        await dba(sql, [
+          dataUpdate,
+          row.orders_id,
+          transaction[0].warehouse_id,
+          val.product_id,
+        ]);
       });
       let dataUpdate = {
         status: "sending",
