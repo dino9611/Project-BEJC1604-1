@@ -87,8 +87,8 @@ module.exports = {
                         join category c on p.category_id = c.id 
                         where p.is_deleted = 0 group by p.id 
                         limit ${mysqldb.escape(
-                          parseInt(pages) * 10
-                        )},${mysqldb.escape(parseInt(limit))}`;
+        parseInt(pages) * 10
+      )},${mysqldb.escape(parseInt(limit))}`;
       const dataProduct = await dba(sql);
       sql = `select count(*) as totaldata from products where is_deleted = 0`;
       const countProduct = await dba(sql);
@@ -348,4 +348,6 @@ module.exports = {
       return res.status(200).send(result);
     });
   },
+
+
 };
