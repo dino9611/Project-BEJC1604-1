@@ -58,6 +58,7 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
+        // get awaiting payment
         sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
         join orders_detail od on o.id = od.orders_id
         join products p on od.product_id = p.id
@@ -477,4 +478,57 @@ module.exports = {
       return res.status(500).send({ message: "Server error" });
     }
   },
+  addWishlist: async (req, res) => {
+    try {
+      const { product_id } = req.body;
+      const { users_id } = req.params;
+      if (!users_id || !product_id) {
+        return res.status(400).send({ message: 'Bad request' });
+      }
+      let sql = `insert into wishlist set ? `;
+      let dataWish = {
+        product_id: product_id,
+        users_id: users_id
+      };
+      await dba(sql, dataWish);
+      sql = `select p.id, p.name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      where w.users_id = ?;`;
+      let resultWish = await dba(sql, users_id);
+      return res.status(200).send(resultWish);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  },
+  removeWishlist: async (req, res) => {
+    try {
+      const { wish_id, users_id } = req.params;
+      let sql = `delete from wishlist where id = ?`;
+      await dba(sql, wish_id);
+      sql = `select w.id as wish_id, p.id as prod_id, p.name, c.category_name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      join category c on p.category_id=c.id
+      where w.users_id = ?`;
+      const result = await dba(sql, users_id);
+      return res.status(200).send(result);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  },
+  getWishlist: async (req, res) => {
+    try {
+      const { users_id } = req.params;
+      let sql = `select w.id as wish_id, p.id as prod_id, p.name, c.category_name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      join category c on p.category_id=c.id
+      where w.users_id = ?`;
+      const wish = await dba(sql, users_id);
+      return res.status(200).send(wish);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  }
 };
