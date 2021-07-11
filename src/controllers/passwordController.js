@@ -8,7 +8,7 @@ const dba = promisify(mysqldb.query).bind(mysqldb);
 const { createForgotPassToken } = require("../helpers/createToken");
 const transporter = require("../helpers/transporter");
 
-const link = "http://localhost:3000/resetpassword/";
+const link = "https://87ec67e8ed43.ngrok.io";
 
 module.exports = {
   resetPassword: async (req, res) => {
@@ -47,7 +47,7 @@ module.exports = {
           uid: user[0].uid,
         };
         const tokenForgot = createForgotPassToken(dataToken);
-        const htmlToEmail = template({ link: link + tokenForgot });
+        const htmlToEmail = template({ link: link + "/resetpassword/" + tokenForgot });
         await transporter.sendMail({
           from: "Admin Fournir <omiputrakarunia@gmail.com>",
           to: email,

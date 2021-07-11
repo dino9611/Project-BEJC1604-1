@@ -27,6 +27,8 @@ const dbprom = (query, arr = []) => {
   });
 };
 
+const FE = 'https://87ec67e8ed43.ngrok.io';
+
 module.exports = {
   All: async (req, res) => {
     try {
@@ -197,7 +199,7 @@ module.exports = {
           const tokenverified = createEmailVerifiedToken(dataToken);
           const tokenAccess = createAccessToken(dataToken);
           const tokenRefresh = createTokenRefresh(dataToken);
-          const link = "http://localhost:3000/verified-email/" + tokenverified;
+          const link = FE + "/verified-email/" + tokenverified;
 
           const htmltoemail = template({ username: username, link: link });
           await transporter.sendMail({
@@ -390,7 +392,7 @@ module.exports = {
       const tokenverified = createEmailVerifiedToken(dataToken);
       const renderHtml = fs.readFileSync(filePath, "utf-8");
       const template = handlebars.compile(renderHtml);
-      const link = "http://localhost:3000/verified-email/" + tokenverified;
+      const link = FE + "/verified-email/" + tokenverified;
 
       const htmltoemail = template({ username: username, link: link });
       await transporter.sendMail({
