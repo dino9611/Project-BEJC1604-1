@@ -8,7 +8,8 @@ const dba = promisify(mysqldb.query).bind(mysqldb);
 const { createForgotPassToken } = require("../helpers/createToken");
 const transporter = require("../helpers/transporter");
 
-const link = "http://localhost:3000/resetpassword/";
+// const linkAkses = "http://localhost:3000";
+const linkAkses = 'http://kelompok1.purwadhikafs1.com';
 
 module.exports = {
   resetPassword: async (req, res) => {
@@ -47,7 +48,7 @@ module.exports = {
           uid: user[0].uid,
         };
         const tokenForgot = createForgotPassToken(dataToken);
-        const htmlToEmail = template({ link: link + tokenForgot });
+        const htmlToEmail = template({ link: linkAkses + '/resetpassword/' + tokenForgot });
         await transporter.sendMail({
           from: "Admin Fournir <omiputrakarunia@gmail.com>",
           to: email,
