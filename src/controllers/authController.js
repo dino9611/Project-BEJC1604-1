@@ -12,7 +12,8 @@ const handlebars = require("handlebars");
 const transporter = require("./../helpers/transporter");
 const hashpass = require("./../helpers/hassingPass");
 const dba = promisify(mysqldb.query).bind(mysqldb);
-const geolib = require("geolib");
+const { uploader } = require("../helpers");
+const multer = require("multer");
 
 const dbprom = (query, arr = []) => {
   return new Promise((resolve, reject) => {
@@ -43,7 +44,7 @@ module.exports = {
       if (!emailOrUsername || !password) {
         return res.status(400).send({ message: "bad request" });
       }
-      let sql = `select * from users where (email = ? or username = ?) and password = ?`;
+      let sql = `select * from users where (email = ? or username = ?) and password = ? and role = '1'`;
       let dataUser = await dba(sql, [
         emailOrUsername,
         emailOrUsername,
@@ -57,8 +58,16 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ?`;
         let cart = await dba(sql, [dataUser[0].id]);
+        // get awaiting payment
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'awaiting payment' and users_id = ?`;
+        let transaction = await dba(sql, [dataUser[0].id]);
+        // let cart = await dba(sql);
         // let cart = await dba(sql);
         console.log("ini cart user (login)", cart);
+        console.log("ini cart user (transaction)", transaction);
         let dataToken = {
           uid: dataUser[0].uid,
           role: dataUser[0].role,
@@ -67,7 +76,7 @@ module.exports = {
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("x-token-access", tokenAccess);
         res.set("x-token-refresh", tokenRefresh);
-        return res.status(200).send({ ...dataUser[0], cart: cart });
+        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
         return res.status(500).send({
           message:
@@ -82,7 +91,7 @@ module.exports = {
   KeepLogin: async (req, res) => {
     try {
       const { uid, role } = req.user;
-      if (role === 1 || 2 || 3 || 4 || 5) {
+      if (role === 1) {
         // console.log(req.user, "ini req.user");
         // console.log(uid, "ini uid");
         let sql = `select * from users where uid = ?`;
@@ -93,18 +102,23 @@ module.exports = {
         join products p on od.product_id = p.id
         where o.status = 'onCart' and users_id = ? and od.is_deleted = 0`;
         let cart = await dbprom(sql, dataUser[0].id);
+        sql = `select od.id as ordersdetail_id, p.id, p.name, p.image, p.price,p.category_id, o.status, o.users_id, o.warehouse_id, od.orders_id, od.product_id, od.qty from orders o
+        join orders_detail od on o.id = od.orders_id
+        join products p on od.product_id = p.id
+        where o.status = 'awaiting payment' and users_id = ?`;
+        let transaction = await dba(sql, [dataUser[0].id]);
         // console.log(cart, "ini cart");
-        return res.status(200).send({ ...dataUser[0], cart: cart });
+        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
+        //disini ngodingnya untuk keeplogin admin
         try {
           sql = `select * from users where uid = ? `;
           const dataAdmin = await dba(sql, [uid]);
           // console.log('ini dataAdmin', dataAdmin[0]);
           return res.status(200).send(dataAdmin[0]);
-
         } catch (error) {
           console.error(error);
-          return res.status(500).send({ message: 'Server error' });
+          return res.status(500).send({ message: "Server error" });
         }
       }
     } catch (error) {
@@ -192,7 +206,6 @@ module.exports = {
             subject: `We need email confirmation for your account`,
             html: htmltoemail,
           });
-
           res.set("x-token-access", tokenAccess);
           res.set("x-token-refresh", tokenRefresh);
           return res.status(200).send({ ...datauser[0], cart: [] });
@@ -212,7 +225,7 @@ module.exports = {
   },
   getUser: (req, res) => {
     const { id } = req.params;
-    let sql = `select id, first_name, last_name, email, phone_number, age from users where id = ?`;
+    let sql = `select id, first_name, last_name, email, phone_number, age, photo from users where id = ?`;
     mysqldb.query(sql, [id], (error, result) => {
       if (error) return res.status(500).send(error);
       return res.status(200).send(result);
@@ -417,4 +430,105 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+  uploadPhoto: async (req, res) => {
+    // upload photo & edit photo profile
+    try {
+      const { id } = req.params;
+      const path = "/user";
+
+      const upload = uploader(path, "PROFILE").fields([{ name: "photo" }]);
+      upload(req, res, async (error) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ message: "Upload photo failed!", error: error.message });
+        }
+        console.log("success");
+        console.log("ini req.files", req.files);
+        const { photo } = req.files;
+        const imagePath = photo ? path + "/" + photo[0].filename : null;
+        console.log(imagePath);
+        const dataUpdate = {
+          photo: imagePath,
+        };
+        try {
+          let sql = `select photo from users where id = ?`;
+          const fotoLama = await dba(sql, id);
+          sql = `update users set ? where id = ?`;
+          await dba(sql, [dataUpdate, id]);
+          if (
+            imagePath &&
+            fotoLama[0].photo != "/user/user-profile-default.jpg"
+          ) {
+            fs.unlinkSync("./public" + fotoLama[0].photo);
+          }
+          sql = `select photo from users where id = ?`;
+          const result = await dba(sql, id);
+          return res.status(201).send(result);
+        } catch (error) {
+          console.error(error);
+          if (imagePath) {
+            fs.unlinkSync("./public" + imagePath);
+          }
+          return res.status(500).send({ message: "Server error" });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "Server error" });
+    }
+  },
+  addWishlist: async (req, res) => {
+    try {
+      const { product_id } = req.body;
+      const { users_id } = req.params;
+      if (!users_id || !product_id) {
+        return res.status(400).send({ message: 'Bad request' });
+      }
+      let sql = `insert into wishlist set ? `;
+      let dataWish = {
+        product_id: product_id,
+        users_id: users_id
+      };
+      await dba(sql, dataWish);
+      sql = `select p.id, p.name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      where w.users_id = ?;`;
+      let resultWish = await dba(sql, users_id);
+      return res.status(200).send(resultWish);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  },
+  removeWishlist: async (req, res) => {
+    try {
+      const { wish_id, users_id } = req.params;
+      let sql = `delete from wishlist where id = ?`;
+      await dba(sql, wish_id);
+      sql = `select w.id as wish_id, p.id as prod_id, p.name, c.category_name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      join category c on p.category_id=c.id
+      where w.users_id = ?`;
+      const result = await dba(sql, users_id);
+      return res.status(200).send(result);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  },
+  getWishlist: async (req, res) => {
+    try {
+      const { users_id } = req.params;
+      let sql = `select w.id as wish_id, p.id as prod_id, p.name, c.category_name, p.price, p.description, p.image, w.users_id from wishlist w 
+      join products p on w.product_id=p.id
+      join category c on p.category_id=c.id
+      where w.users_id = ?`;
+      const wish = await dba(sql, users_id);
+      return res.status(200).send(wish);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Server error' });
+    }
+  }
 };

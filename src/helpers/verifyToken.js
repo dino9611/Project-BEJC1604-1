@@ -27,6 +27,21 @@ module.exports.verifyEmailToken = (req, res, next) => {
   });
 };
 
+module.exports.verifyEmailForgotToken = (req, res, next) => {
+  console.log('ini tokenForgot', req.token);
+  const token = req.token;
+  const key = 'fournir-forgot';
+  jwt.verify(token, key, (error, decoded) => {
+    if (error) {
+      console.error(error);
+      return res.status(401).send({ message: 'User unauthorized' });
+    }
+    console.log('ini decoded forgot', decoded);
+    req.user = decoded;
+    next();
+  });
+};
+
 // module.exports.checkId = (req, res, next) => {
 //   const { uid } = req.body;
 //   if (uid === req.user.uid) {

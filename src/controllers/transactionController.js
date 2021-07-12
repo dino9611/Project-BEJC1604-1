@@ -19,7 +19,7 @@ join products p on od.product_id = p.id
 where o.status = 'onCart' and users_id = ? and od.is_deleted = 0;`;
 
 const generateInvoice = (orders_id, users_id) => {
-  return "TRX" + orders_id + new Date().getTime() + users_id;
+  return "TRX-" + orders_id + new Date().getFullYear() + '' + new Date().getMonth() + '' + new Date().getDate() + users_id;
 };
 
 module.exports = {
@@ -239,11 +239,10 @@ module.exports = {
       return res.status(500).send({ message: "Server error" });
     }
   },
-
   getOrders: async (req, res) => {
     try {
       const { users_id } = req.params;
-      let sql = `select o.*, b.name, b.account_number, sum(od.qty * od.price) as total from orders o 
+      let sql = `select o.*, b.name, b.account_number, b.logo, sum(od.qty * od.price) as total from orders o 
             join bank b on b.id = o.bank_id
             join orders_detail od on od.orders_id = o.id
             where status = 'awaiting payment' and users_id = ?
@@ -268,7 +267,7 @@ module.exports = {
             .status(500)
             .json({ message: "Upload photo failed!", error: error.message });
         }
-        console.log("berhasil");
+        console.log("success");
         console.log(req.files);
         const { photo } = req.files;
         const imagePath = photo ? path + "/" + photo[0].filename : null;
@@ -382,7 +381,11 @@ module.exports = {
     try {
       const { uid } = req.user;
       const { status, search } = req.query;
+      let searchSql = "";
       console.log(req.user);
+      if (search) {
+        searchSql = `and p.name like ${mysqldb.escape("%" + search + "%")}`;
+      }
       let sql = `select o.id, p.name as name, u.uid, p.image, o.status, date_format(od.date,'%d %M %y') as date, 
                   time_format(od.date, '%H:%i') as hour_, sum(od.price*od.qty) as total_price, od.price, 
                   o.invoice_number as invoice, od.qty, o.users_id 
@@ -390,7 +393,8 @@ module.exports = {
                   left join orders_detail od on o.id = od.orders_id
                   left join products p on p.id = od.product_id 
                   join users u on o.users_id = u.id
-                  where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending")
+                  where u.uid = ? and od.is_deleted = 0 and o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending","delivered", "rejected")
+                  ${searchSql}
                   group by o.id 
                   order by od.date desc;`;
       if (status) {
@@ -402,11 +406,12 @@ module.exports = {
                   left join products p on p.id = od.product_id 
                   join users u on o.users_id = u.id
                   where u.uid = ? and od.is_deleted = 0 and o.status = ${mysqldb.escape(
-                    status
-                  )}
+          status
+        )} ${searchSql}
                   group by o.id 
                   order by od.date desc;`;
       }
+
       const dataHistory = await dba(sql, [uid]);
       // console.log(dataHistory);
       return res.status(200).send(dataHistory);
@@ -424,7 +429,7 @@ module.exports = {
                   join orders o on o.id = od.orders_id 
                   join products p on od.product_id = p.id
                   join users u on o.users_id = u.id 
-                  where o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending") and od.is_deleted = 0 and o.id = ?
+                  where o.status in ("awaiting payment", "awaiting confirmation", "processed", "sending", "delivered", "rejected") and od.is_deleted = 0 and o.id = ?
                   order by od.date desc;`;
       const orderDetail = await dba(sql, [id]);
       console.log(orderDetail);
@@ -433,12 +438,19 @@ module.exports = {
       return res.status(500).send({ message: "server error" });
     }
   },
+
+  acceptedOrder: async (req, res) => {
+    try {
+      const { status, row } = req.body;
+      let dataUpdate = {
+        status: status,
+      };
+      let sql = `update orders set ? where invoice_number = ? and id = ?`;
+      await dba(sql, [dataUpdate, row.invoice, row.id]);
+      return res.status(200).send({ message: "berhasil" });
+    } catch (error) {
+      return res.status(500).send({ message: "server error" });
+    }
+  },
 };
 
-// update bukti pembayaran, status, invoice number where orders.id
-// get orders_detail where by orders.id
-// ambilnya qyt dan products_id
-// karena mau insert lebih dari 1 row makanya dilooping, yg di looping data dari orders detail
-// ubah readyToSend jadi 1
-
-// data yang di insert qty, product_id, warehouse_id, orders_id, readyToSend

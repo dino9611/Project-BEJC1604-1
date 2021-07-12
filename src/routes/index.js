@@ -1,6 +1,17 @@
 module.exports = {
+  // user
   authRoutes: require("./authRoutes"),
   ProductRoutes: require("./ProductRoutes"),
-  adminRoutes: require("./adminRoutes"),
   transactionRoutes: require("./transactionRoutes"),
+
+  // admin
+  adminRoutes: require("./adminRoutes"),
+  adminTransactionRoutes: require("./adminTransactionRoutes"),
+  adminProcessingRoutes: require("./adminProcessingRoutes"),
+  adminRequestRoutes: require("./adminRequestRoutes"),
+
+  passwordRoutes: require("./passwordRoutes"),
+
+  ProductWarehouseRoutes: require("./ProductWarehouseRoutes"),
+  NewAdminRoutes: require("./NewAdminRoutes"),
 };

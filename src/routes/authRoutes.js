@@ -17,7 +17,11 @@ const {
   sendEmailVerification,
   getAddress,
   defaultAddress,
-  deleteAddress
+  deleteAddress,
+  uploadPhoto,
+  addWishlist,
+  getWishlist,
+  removeWishlist
 } = authController;
 
 router.post("/login", Login);
@@ -32,5 +36,9 @@ router.post("/addData/:id", addPersonalData);
 router.post("/addAddress/:users_id", addAddress);
 router.post('/defaultaddress/:address_id/:users_id', defaultAddress);
 router.delete('/address/delete/:address_id/:users_id', deleteAddress);
+router.post('/uploadphoto/:id', verifyTokenAccess, uploadPhoto);
+router.post('/addwishlist/:users_id', addWishlist);
+router.get('/getwish/:users_id', getWishlist);
+router.delete('/removewish/:users_id/:wish_id', removeWishlist);
 
 module.exports = router;
