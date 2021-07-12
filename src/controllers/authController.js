@@ -28,7 +28,7 @@ const dbprom = (query, arr = []) => {
 };
 
 // const linkAkses = "http://localhost:3000";
-const linkAkses = 'http://kelompok1.purwadhikafs1.com';
+const linkAkses = "http://kelompok1.purwadhikafs1.com";
 
 module.exports = {
   All: async (req, res) => {
@@ -79,7 +79,9 @@ module.exports = {
         const tokenRefresh = createTokenRefresh(dataToken);
         res.set("x-token-access", tokenAccess);
         res.set("x-token-refresh", tokenRefresh);
-        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
+        return res
+          .status(200)
+          .send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
         return res.status(500).send({
           message:
@@ -111,7 +113,9 @@ module.exports = {
         where o.status = 'awaiting payment' and users_id = ?`;
         let transaction = await dba(sql, [dataUser[0].id]);
         // console.log(cart, "ini cart");
-        return res.status(200).send({ ...dataUser[0], cart: cart, transaction: transaction });
+        return res
+          .status(200)
+          .send({ ...dataUser[0], cart: cart, transaction: transaction });
       } else {
         //disini ngodingnya untuk keeplogin admin
         try {
@@ -203,6 +207,7 @@ module.exports = {
           const link = linkAkses + "/verified-email/" + tokenverified;
 
           const htmltoemail = template({ username: username, link: link });
+          console.log(htmltoemail);
           await transporter.sendMail({
             from: "Admin Fournir <omiputrakarunia@gmail.com>",
             to: email,
@@ -486,12 +491,12 @@ module.exports = {
       const { product_id } = req.body;
       const { users_id } = req.params;
       if (!users_id || !product_id) {
-        return res.status(400).send({ message: 'Bad request' });
+        return res.status(400).send({ message: "Bad request" });
       }
       let sql = `insert into wishlist set ? `;
       let dataWish = {
         product_id: product_id,
-        users_id: users_id
+        users_id: users_id,
       };
       await dba(sql, dataWish);
       sql = `select p.id, p.name, p.price, p.description, p.image, w.users_id from wishlist w 
@@ -501,7 +506,7 @@ module.exports = {
       return res.status(200).send(resultWish);
     } catch (error) {
       console.error(error);
-      return res.status(500).send({ message: 'Server error' });
+      return res.status(500).send({ message: "Server error" });
     }
   },
   removeWishlist: async (req, res) => {
@@ -517,7 +522,7 @@ module.exports = {
       return res.status(200).send(result);
     } catch (error) {
       console.error(error);
-      return res.status(500).send({ message: 'Server error' });
+      return res.status(500).send({ message: "Server error" });
     }
   },
   getWishlist: async (req, res) => {
@@ -531,7 +536,7 @@ module.exports = {
       return res.status(200).send(wish);
     } catch (error) {
       console.error(error);
-      return res.status(500).send({ message: 'Server error' });
+      return res.status(500).send({ message: "Server error" });
     }
-  }
+  },
 };
