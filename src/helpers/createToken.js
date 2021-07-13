@@ -13,7 +13,7 @@ module.exports = {
   },
   createEmailVerifiedToken: (data) => {
     const key = "fournir-ecom";
-    const token = jwt.sign(data, key, { expiresIn: 60 * 1 }); // 10s
+    const token = jwt.sign(data, key, { expiresIn: 60 * 3 }); // 3minute
     return token;
   },
   createForgotPassToken: (data) => {
