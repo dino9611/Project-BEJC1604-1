@@ -65,6 +65,7 @@ module.exports = {
         totaldata: countProduct[0].totaldata,
       });
     } catch (error) {
+      console.log(error)
       return res.status(500).send({ message: "server error" });
     }
   },
